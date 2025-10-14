@@ -10,20 +10,20 @@ import java.util.concurrent.ConcurrentHashMap
  * This locator is used during code generation to resolve classes that have been
  * dynamically generated but not yet written to disk or loaded into a ClassLoader.
  */
-class MapClassFileLocator : ClassFileLocator {
-    private val classFiles = ConcurrentHashMap<String, ByteArray>()
+class ExplicitClassLocator : ClassFileLocator {
+    val classes = ConcurrentHashMap<String, ByteArray>()
 
     /**
      * Add a DynamicType and all its auxiliary types to this locator.
      */
     fun add(dynamicType: DynamicType) {
         for ((typeDescription, bytes) in dynamicType.allTypes) {
-            classFiles[typeDescription.name] = bytes
+            classes[typeDescription.name] = bytes
         }
     }
 
     override fun locate(name: String): ClassFileLocator.Resolution {
-        val bytes = classFiles[name]
+        val bytes = classes[name]
         return if (bytes != null) {
             ClassFileLocator.Resolution.Explicit(bytes)
         } else {

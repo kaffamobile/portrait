@@ -5,92 +5,49 @@ import net.bytebuddy.ClassFileVersion
 import net.bytebuddy.dynamic.ClassFileLocator
 import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.pool.TypePool
-import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import tech.kaffa.portrait.codegen.generator.DirectoryOutputTarget
+import tech.kaffa.portrait.codegen.generator.JarOutputTarget
+import tech.kaffa.portrait.codegen.generator.OutputTarget
 import tech.kaffa.portrait.codegen.portrait.PortraitClassFactory
 import tech.kaffa.portrait.codegen.provider.GeneratedPortraitProviderFactory
 import tech.kaffa.portrait.codegen.proxy.ProxyClassFactory
-import tech.kaffa.portrait.codegen.utils.ClassGraphLocator
-import tech.kaffa.portrait.codegen.utils.MapClassFileLocator
+import tech.kaffa.portrait.codegen.utils.ExplicitClassLocator
 import java.io.Closeable
 import java.io.File
-import java.io.FileOutputStream
-import java.util.jar.JarEntry
-import java.util.jar.JarOutputStream
 
-object PortraitGenerator {
-    private val logger = LoggerFactory.getLogger(PortraitGenerator::class.java)
+class PortraitGenerator private constructor(
+    private val output: OutputTarget,
+    private val scan: ClasspathScanner.Result
+) : Closeable {
+    private val byteBuddy = ByteBuddy().with(ClassFileVersion.JAVA_V8)
+    private val classpathMap = ExplicitClassLocator()
+    private val typePool = TypePool.Default.of(
+        ClassFileLocator.Compound(classpathMap, scan.locator)
+    )
 
     interface GeneratedClass {
         val dynamicType: DynamicType
     }
 
-    fun generateJar(scan: ClasspathScanner.Result, outputPath: String) {
-        val jarFile = File(outputPath)
-        // Ensure parent directory exists
-        jarFile.parentFile?.mkdirs()
-
-        JarOutputTarget(
-            jarFile,
-            logger
-        ).use { output ->
-            generate(scan, output)
-        }
-
-        logger.info("Generated JAR: ${jarFile.absolutePath}")
+    /** Call when you're done to flush/close underlying resources (e.g., the JarOutputStream). */
+    override fun close() {
+        output.close()
     }
 
-    fun generateFolder(scan: ClasspathScanner.Result, outputPath: String) {
-        val outputDir = File(outputPath)
-
-        // Ensure output directory exists
-        outputDir.mkdirs()
-
-        DirectoryOutputTarget(
-            outputDir,
-            logger
-        ).use { output ->
-            generate(scan, output)
-        }
-
-        logger.info("Generated folder: ${outputDir.absolutePath}")
-    }
-
-    private fun generate(
-        scan: ClasspathScanner.Result,
-        output: GeneratedOutput
-    ) {
-        val byteBuddy = createByteBuddy()
+    /**
+     * Generate all proxy/portrait/provider classes and write them to the configured [OutputTarget].
+     */
+    fun generate() {
         val generatedProxies = mutableMapOf<String, ProxyClassFactory.Result>()
 
-        // Create a MapClassFileLocator to hold generated classes
-        val classpathMap = MapClassFileLocator()
-
-        // Create composite TypePool that chains the dynamic locator with the classpath scanner's typePool
-        val typePool = TypePool.Default.of(
-            ClassFileLocator.Compound(
-                classpathMap,
-                ClassGraphLocator(scan.result),
-                ClassFileLocator.ForClassLoader.ofSystemLoader()
-            )
-        )
-
-        for (proxy in generateProxyClasses(
-            byteBuddy,
-            scan,
-            typePool
-        )) {
+        for (proxy in generateProxyClasses()) {
             generatedProxies[proxy.superType.name] = proxy
             classpathMap.add(proxy.dynamicType)
             output.writeGeneratedClass(proxy)
         }
 
-        val generatedPortraits = generatePortraitClasses(
-            byteBuddy,
-            scan,
-            generatedProxies,
-            typePool
-        ).toList()
+        val generatedPortraits = generatePortraitClasses(generatedProxies).toList()
 
         for (portrait in generatedPortraits) {
             classpathMap.add(portrait.dynamicType)
@@ -98,99 +55,14 @@ object PortraitGenerator {
         }
 
         if (generatedPortraits.isNotEmpty()) {
-            val providerFactory = GeneratedPortraitProviderFactory(byteBuddy, typePool)
-            val providerResult = providerFactory.make(generatedPortraits)
-
-            output.writeGeneratedClass(providerResult)
-            output.writeServiceProviderEntry(providerResult.providerClassName)
-
-            logger.info("Generated PortraitProvider: ${providerResult.providerClassName}")
+            generatePortraitProvider(generatedPortraits)
         }
     }
 
-    private fun createByteBuddy(): ByteBuddy = ByteBuddy().with(ClassFileVersion.JAVA_V8)
-
-
-    private interface GeneratedOutput : Closeable {
-        fun writeGeneratedClass(generated: GeneratedClass)
-        fun writeServiceProviderEntry(providerClassName: String)
-    }
-
-    private class JarOutputTarget(
-        jarFile: File,
-        private val logger: Logger
-    ) : GeneratedOutput {
-        private val jarOut = JarOutputStream(FileOutputStream(jarFile))
-
-        override fun writeGeneratedClass(generated: GeneratedClass) {
-            for ((typeDescription, auxiliaryBytes) in generated.dynamicType.allTypes) {
-                val className = typeDescription.name
-                val entryName = "${className.replace('.', '/')}.class"
-
-                jarOut.putNextEntry(JarEntry(entryName))
-                jarOut.write(auxiliaryBytes)
-                jarOut.closeEntry()
-
-                logger.debug("Generated: $className")
-            }
-        }
-
-        override fun writeServiceProviderEntry(providerClassName: String) {
-            val entryName = "META-INF/services/tech.kaffa.portrait.provider.PortraitProvider"
-            jarOut.putNextEntry(JarEntry(entryName))
-            jarOut.write(providerClassName.toByteArray(Charsets.UTF_8))
-            jarOut.closeEntry()
-            logger.debug("Generated service provider entry: $entryName -> $providerClassName")
-        }
-
-        override fun close() {
-            jarOut.close()
-        }
-    }
-
-    private class DirectoryOutputTarget(
-        private val outputDir: File,
-        private val logger: Logger
-    ) : GeneratedOutput {
-        override fun writeGeneratedClass(generated: GeneratedClass) {
-            for ((typeDescription, auxiliaryBytes) in generated.dynamicType.allTypes) {
-                val className = typeDescription.name
-                val classFilePath = "${className.replace('.', '/')}.class"
-                val classFile = File(outputDir, classFilePath)
-
-                classFile.parentFile.mkdirs()
-                classFile.writeBytes(auxiliaryBytes)
-
-                logger.debug("Generated: $className")
-            }
-        }
-
-        override fun writeServiceProviderEntry(providerClassName: String) {
-            val serviceFile = File(outputDir, "META-INF/services/tech.kaffa.portrait.provider.PortraitProvider")
-            serviceFile.parentFile.mkdirs()
-            serviceFile.writeText(providerClassName, Charsets.UTF_8)
-            logger.debug("Generated service provider entry: ${serviceFile.absolutePath} -> $providerClassName")
-        }
-
-        override fun close() {
-            // Nothing to close for directory output
-        }
-    }
-
-    private fun generateProxyClasses(
-        byteBuddy: ByteBuddy,
-        scan: ClasspathScanner.Result,
-        typePool: TypePool
-    ): Sequence<ProxyClassFactory.Result> {
+    private fun generateProxyClasses(): Sequence<ProxyClassFactory.Result> {
         val factory = ProxyClassFactory(byteBuddy, typePool)
-        val classNames = LinkedHashSet<String>().apply {
-            scan.proxyTargets
-                .filter { it.isInterface }
-                .mapTo(this) { it.name }
-            addAll(scan.proxyTargetClassNames)
-        }
 
-        return classNames.asSequence()
+        return scan.proxyTargets.asSequence()
             .mapNotNull { className ->
                 if (!shouldGeneratePortrait(className)) {
                     logger.debug("Skipping proxy generation for $className due to package restrictions")
@@ -212,20 +84,11 @@ object PortraitGenerator {
     }
 
     private fun generatePortraitClasses(
-        byteBuddy: ByteBuddy,
-        scan: ClasspathScanner.Result,
-        generatedProxies: MutableMap<String, ProxyClassFactory.Result>,
-        typePool: TypePool
+        generatedProxies: MutableMap<String, ProxyClassFactory.Result>
     ): Sequence<PortraitClassFactory.Result> {
         val factory = PortraitClassFactory(byteBuddy, typePool, generatedProxies)
-        val classNames = LinkedHashSet<String>().apply {
-            scan.reflectives.mapTo(this) { it.name }
-            scan.proxyTargets.mapTo(this) { it.name }
-            addAll(scan.reflectiveClassNames)
-            addAll(scan.proxyTargetClassNames)
-        }
 
-        return classNames.asSequence()
+        return (scan.proxyTargets + scan.reflectives).asSequence()
             .filter { shouldGeneratePortrait(it) }
             .mapNotNull { className ->
                 try {
@@ -237,6 +100,14 @@ object PortraitGenerator {
             }
     }
 
+    private fun generatePortraitProvider(generatedPortraits: List<PortraitClassFactory.Result>) {
+        val providerFactory = GeneratedPortraitProviderFactory(byteBuddy, typePool)
+        val providerResult = providerFactory.make(generatedPortraits)
+
+        output.writeGeneratedClass(providerResult)
+        output.writeServiceProviderEntry(providerResult.providerClassName)
+    }
+
     private fun shouldGeneratePortrait(className: String): Boolean {
         if (className.isBlank()) return false
         if (className in PRIMITIVE_NAMES) return false
@@ -246,15 +117,52 @@ object PortraitGenerator {
         return true
     }
 
-    private val PRIMITIVE_NAMES = setOf(
-        "boolean",
-        "byte",
-        "char",
-        "short",
-        "int",
-        "long",
-        "float",
-        "double",
-        "void"
-    )
+    enum class OutputType { JAR, FOLDER }
+
+    companion object {
+
+        private val logger = LoggerFactory.getLogger(PortraitGenerator::class.java)
+
+        /**
+         * Construct a [PortraitGenerator] that writes to a JAR at [outputPath].
+         * Remember to call [close] (or use Kotlin's `use {}`) after [generate].
+         */
+        fun forJar(
+            outputPath: String,
+            scan: ClasspathScanner.Result
+        ): PortraitGenerator {
+            val jarFile = File(outputPath)
+            return PortraitGenerator(JarOutputTarget(jarFile, logger), scan)
+        }
+
+        /**
+         * Construct a [PortraitGenerator] that writes class files into the folder at [outputPath].
+         * Remember to call [close] (or use Kotlin's `use {}`) after [generate].
+         */
+        fun forFolder(
+            outputPath: String,
+            scan: ClasspathScanner.Result
+        ): PortraitGenerator {
+            val outputDir = File(outputPath)
+            return PortraitGenerator(DirectoryOutputTarget(outputDir, logger), scan)
+        }
+
+        /**
+         * Generic factory that selects the output implementation by [type].
+         */
+        fun forType(
+            type: OutputType,
+            outputPath: String,
+            scan: ClasspathScanner.Result
+        ): PortraitGenerator {
+            return when (type) {
+                OutputType.JAR -> forJar(outputPath, scan)
+                OutputType.FOLDER -> forFolder(outputPath, scan)
+            }
+        }
+
+        private val PRIMITIVE_NAMES = setOf(
+            "boolean", "byte", "char", "short", "int", "long", "float", "double", "void"
+        )
+    }
 }

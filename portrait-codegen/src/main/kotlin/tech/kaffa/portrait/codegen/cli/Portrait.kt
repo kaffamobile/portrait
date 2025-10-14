@@ -9,6 +9,7 @@ import com.github.ajalt.clikt.parameters.types.path
 import org.slf4j.LoggerFactory
 import tech.kaffa.portrait.codegen.ClasspathScanner
 import tech.kaffa.portrait.codegen.PortraitGenerator
+import tech.kaffa.portrait.codegen.PortraitGenerator.OutputType
 import kotlin.io.path.pathString
 
 /**
@@ -52,6 +53,7 @@ class Portrait : CliktCommand(
         .required()
         .help("Output path for generated Portrait classes (JAR file or directory)")
 
+    // Accepts "jar" or "folder" (case-insensitive) and defers to OutputType
     private val format by option("--format", "-f")
         .choice("jar", "folder", ignoreCase = true)
         .help("Output format: 'jar' or 'folder' (auto-detected from output path if not specified)")
@@ -59,35 +61,40 @@ class Portrait : CliktCommand(
     override fun run() {
         printSplash()
 
-        // Auto-detect format from output path if not specified
-        val outputFormat = format ?: detectOutputFormat(output.pathString)
         val classpath = input.pathString
+        val outputPath = output.pathString
+
+        // Auto-detect OutputType from the output path if not specified
+        val outputType: OutputType = format
+            ?.let { toOutputType(it) }
+            ?: detectOutputType(outputPath)
 
         logger.info("Scanning classpath for Portrait annotations...")
         val scanResult = ClasspathScanner(classpath).scan()
-        logger.info("Identified ${scanResult.reflectives.size} reflective classes and ${scanResult.proxyTargets.size} proxy targets.")
+        logger.info(
+            "Identified ${scanResult.reflectives.size} reflective classes and " +
+                    "${scanResult.proxyTargets.size} proxy targets."
+        )
 
         logger.info("Generating Portrait classes...")
-        when (outputFormat) {
-            "jar" -> PortraitGenerator.generateJar(
-                scanResult,
-                output.pathString
-            )
-
-            "folder" -> PortraitGenerator.generateFolder(
-                scanResult,
-                output.pathString
-            )
-        }
+        PortraitGenerator
+            .forType(outputType, outputPath, scanResult)
+            .generate()
 
         logger.info("Portrait code generation completed successfully")
     }
 
-    private fun detectOutputFormat(path: String): String {
-        return if (path.endsWith(".jar", ignoreCase = true)) {
-            "jar"
-        } else {
-            "folder"
+    private fun detectOutputType(path: String): OutputType {
+        return if (path.endsWith(".jar", ignoreCase = true))
+            OutputType.JAR
+        else OutputType.FOLDER
+    }
+
+    private fun toOutputType(choice: String): OutputType {
+        return when (choice.lowercase()) {
+            "jar" -> OutputType.JAR
+            "folder" -> OutputType.FOLDER
+            else -> error("Unsupported output type: $choice")
         }
     }
 
