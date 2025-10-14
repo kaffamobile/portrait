@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(./gradlew build:*)",
+      "Bash(./gradlew:*)",
+      "Bash(dir:*)",
+      "Bash(findstr:*)",
+      "Bash(../gradlew compileKotlin:*)",
+      "Bash(.gradlew :portrait-api:compileTestFixturesKotlin)",
+      "Bash(find:*)",
+      "Bash(.gradlew compileKotlin)",
+      "Bash(../gradlew build)",
+      "Bash(../gradlew test)",
+      "Bash(.gradlew build)",
+      "Bash(.gradlew:*)",
+      "Bash(./gradlew.bat:*)",
+      "Bash(.\\gradlew.bat:*)",
+      "Bash(gradlew.bat :tests-e2e:build:*)",
+      "Bash(gradlew.bat:*)",
+      "Bash(cat:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
