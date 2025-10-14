@@ -25,7 +25,7 @@
 
 ## Practical Reminders for Agents
 - Follow version-catalog conventions for dependencies; add entries in `[versions]` and reference via `libs.*`.
-- When debugging resolution, confirm providers are registered in `META-INF/services/kaffa.portrait.provider.PortraitProvider`.
+- When debugging resolution, confirm providers are registered in `META-INF/services/tech.kaffa.portrait.provider.PortraitProvider`.
 - Portrait handles Java primitives directly; failures there indicate provider or lookup regressions.
 - For proxies, use `ProxyHandler` callbacks; generated proxies dispatch via method IDs.
 - Keep metadata compatibility in mind: binary blobs start with magic/version headers and rely on string pooling and flag bitmasks.

@@ -1,4 +1,4 @@
-package kaffa.portrait.codegen.utils
+package tech.kaffa.portrait.codegen.utils
 
 import io.mockk.every
 import io.mockk.mockk

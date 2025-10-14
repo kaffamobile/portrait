@@ -7,7 +7,7 @@ operations across different platforms. This document outlines the public API cla
 
 ### Portrait (Entry Point)
 
-**Location:** `kaffa.portrait.Portrait`
+**Location:** `tech.kaffa.portrait.Portrait`
 
 The primary entry point for the Portrait reflection API. Provides static methods to create PClass instances from various
 sources.
@@ -24,7 +24,7 @@ sources.
 
 ### PClass&lt;T&gt; (Class Representation)
 
-**Location:** `kaffa.portrait.PClass`
+**Location:** `tech.kaffa.portrait.PClass`
 
 Abstract representation of a class that provides controlled access to reflection capabilities.
 
@@ -58,7 +58,7 @@ Abstract representation of a class that provides controlled access to reflection
 
 ### PMethod (Method Representation)
 
-**Location:** `kaffa.portrait.PMethod`
+**Location:** `tech.kaffa.portrait.PMethod`
 
 Abstract representation of a method with reflection capabilities.
 
@@ -84,7 +84,7 @@ Abstract representation of a method with reflection capabilities.
 
 ### PField (Field Representation)
 
-**Location:** `kaffa.portrait.PField`
+**Location:** `tech.kaffa.portrait.PField`
 
 Abstract representation of a field with reflection capabilities.
 
@@ -106,7 +106,7 @@ Abstract representation of a field with reflection capabilities.
 
 ### PConstructor&lt;T&gt; (Constructor Representation)
 
-**Location:** `kaffa.portrait.PConstructor`
+**Location:** `tech.kaffa.portrait.PConstructor`
 
 Abstract representation of a constructor with reflection capabilities.
 
@@ -127,7 +127,7 @@ Abstract representation of a constructor with reflection capabilities.
 
 ### PAnnotation (Annotation Representation)
 
-**Location:** `kaffa.portrait.PAnnotation`
+**Location:** `tech.kaffa.portrait.PAnnotation`
 
 Abstract representation of an annotation with value access.
 
@@ -145,7 +145,7 @@ Abstract representation of an annotation with value access.
 
 ### ProxyHandler&lt;T&gt; (Proxy Invocation Handler)
 
-**Location:** `kaffa.portrait.proxy.ProxyHandler`
+**Location:** `tech.kaffa.portrait.proxy.ProxyHandler`
 
 Functional interface for handling method invocations on dynamic proxies.
 
@@ -155,7 +155,7 @@ Functional interface for handling method invocations on dynamic proxies.
 
 ### PortraitProvider (Service Provider Interface)
 
-**Location:** `kaffa.portrait.provider.PortraitProvider`
+**Location:** `tech.kaffa.portrait.provider.PortraitProvider`
 
 Service provider interface for platform-specific implementations.
 
@@ -166,7 +166,7 @@ Service provider interface for platform-specific implementations.
 
 ### Extension Properties
 
-**Location:** `kaffa.portrait.Extensions`
+**Location:** `tech.kaffa.portrait.Extensions`
 
 Convenient extension properties for fluent API usage:
 
@@ -176,7 +176,7 @@ Convenient extension properties for fluent API usage:
 
 ### Exceptions
 
-**Location:** `kaffa.portrait.PortraitNotFoundException`, `kaffa.portrait.ProxyCreationException`
+**Location:** `tech.kaffa.portrait.PortraitNotFoundException`, `tech.kaffa.portrait.ProxyCreationException`
 
 - `PortraitNotFoundException` - Thrown when class resolution fails
 - `ProxyCreationException` - Thrown when proxy creation fails
@@ -185,7 +185,7 @@ Convenient extension properties for fluent API usage:
 
 ### @Reflective
 
-**Location:** `kaffa.portrait.Reflective`
+**Location:** `tech.kaffa.portrait.Reflective`
 
 Marks a class as requiring reflection capabilities at runtime.
 
@@ -197,7 +197,7 @@ Marks a class as requiring reflection capabilities at runtime.
 
 ### @ProxyTarget
 
-**Location:** `kaffa.portrait.ProxyTarget`
+**Location:** `tech.kaffa.portrait.ProxyTarget`
 
 Marks an interface as a target for proxy generation.
 
@@ -209,7 +209,7 @@ Marks an interface as a target for proxy generation.
 
 ### @OptInPortraits
 
-**Location:** `kaffa.portrait.OptInPortraits`
+**Location:** `tech.kaffa.portrait.OptInPortraits`
 
 Allows a class to opt-in other classes for Portrait capabilities without modifying them.
 

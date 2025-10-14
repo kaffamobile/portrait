@@ -1,4 +1,4 @@
-package kaffa.portrait.codegen
+package tech.kaffa.portrait.codegen
 
 import io.github.classgraph.ClassInfo
 import io.mockk.every
@@ -46,7 +46,7 @@ class PortraitGeneratorTest {
             // This test verifies that the JAR generation process completes
             // without crashing. Full bytecode generation testing would require
             // more complex setup with actual classes
-            PortraitGenerator.generateJar(mockScanResult, outputFile)
+            tech.kaffa.portrait.codegen.PortraitGenerator.generateJar(mockScanResult, outputFile)
         } catch (e: Exception) {
             // Expected in test environment - actual class loading might fail
             assertNotNull(e) // Just verify we get some expected error
@@ -61,7 +61,10 @@ class PortraitGeneratorTest {
         val mockScanResult = createMockScanResult()
 
         try {
-            PortraitGenerator.generateJar(mockScanResult, "portrait-generated.jar")
+            tech.kaffa.portrait.codegen.PortraitGenerator.generateJar(
+                mockScanResult,
+                "portrait-generated.jar"
+            )
 
         } catch (e: Exception) {
             // Expected in test environment
@@ -90,7 +93,10 @@ class PortraitGeneratorTest {
         )
 
         try {
-            PortraitGenerator.generateJar(emptyScanResult, "empty-test.jar")
+            tech.kaffa.portrait.codegen.PortraitGenerator.generateJar(
+                emptyScanResult,
+                "empty-test.jar"
+            )
 
         } catch (e: Exception) {
             // Some error is expected when generating with no classes
@@ -103,7 +109,7 @@ class PortraitGeneratorTest {
     @Test
     fun `PortraitGenerator GeneratedClass interface exists`() {
         // Verify the interface structure
-        val interfaceClass = PortraitGenerator.GeneratedClass::class.java
+        val interfaceClass = tech.kaffa.portrait.codegen.PortraitGenerator.GeneratedClass::class.java
 
         assertTrue(interfaceClass.isInterface)
 
@@ -134,7 +140,10 @@ class PortraitGeneratorTest {
         )
 
         try {
-            PortraitGenerator.generateJar(scanResult, "non-interface-test.jar")
+            tech.kaffa.portrait.codegen.PortraitGenerator.generateJar(
+                scanResult,
+                "non-interface-test.jar"
+            )
 
             // Should handle non-interface proxy targets gracefully
             // (likely by skipping them)
@@ -153,7 +162,10 @@ class PortraitGeneratorTest {
         val invalidOutputPath = "/invalid/directory/path/test.jar"
 
         try {
-            PortraitGenerator.generateJar(mockScanResult, invalidOutputPath)
+            tech.kaffa.portrait.codegen.PortraitGenerator.generateJar(
+                mockScanResult,
+                invalidOutputPath
+            )
 
         } catch (e: Exception) {
             // Should get an exception for invalid path
@@ -164,7 +176,7 @@ class PortraitGeneratorTest {
 
     @Test
     fun `PortraitGenerator generation methods exist`() {
-        val methods = PortraitGenerator::class.java.declaredMethods
+        val methods = tech.kaffa.portrait.codegen.PortraitGenerator::class.java.declaredMethods
 
         val generateProxyMethod = methods.find { it.name == "generateProxyClasses" }
         val generatePortraitMethod = methods.find { it.name == "generatePortraitClasses" }

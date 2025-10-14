@@ -1,4 +1,4 @@
-package kaffa.portrait.codegen
+package tech.kaffa.portrait.codegen
 
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -152,15 +152,15 @@ class ClasspathScannerTest {
         ClasspathScanner(currentClasspath).scan().use { result ->
             val reflectiveNames = result.reflectiveClassNames
 
-            assertTrue("kaffa.portrait.codegen.PublicApiSubtypeRoot" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSubtypeBase" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSubtypeContract" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSubtypeImpl" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSubtypeContractImpl" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSupertypeRoot" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSupertypeImpl" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiSupertypeBase" in reflectiveNames)
-            assertTrue("kaffa.portrait.codegen.PublicApiStringRoot" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeRoot" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeBase" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeContract" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeImpl" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeContractImpl" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSupertypeRoot" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSupertypeImpl" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiSupertypeBase" in reflectiveNames)
+            assertTrue("tech.kaffa.portrait.codegen.PublicApiStringRoot" in reflectiveNames)
             assertTrue("java.lang.String" in reflectiveNames, "Missing java.lang.String. Found: $reflectiveNames")
         }
     }

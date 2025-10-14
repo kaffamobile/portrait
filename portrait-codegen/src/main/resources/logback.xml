@@ -37,7 +37,7 @@
         </encoder>
     </appender>
 
-    <logger name="kaffa.portrait.codegen" level="INFO" additivity="false">
+    <logger name="tech.kaffa.portrait.codegen" level="INFO" additivity="false">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="STDERR"/>
         <appender-ref ref="FILE"/>

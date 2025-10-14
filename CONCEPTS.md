@@ -269,11 +269,11 @@ Binary format for type information:
 
 ### Provider Registration
 
-Providers register via `META-INF/services/kaffa.portrait.provider.PortraitProvider`:
+Providers register via `META-INF/services/tech.kaffa.portrait.provider.PortraitProvider`:
 
 ```
-kaffa.portrait.runtime.jvm.JvmPortraitProvider
-kaffa.portrait.internal.WellKnownPortraitProvider
+tech.kaffa.portrait.runtime.jvm.JvmPortraitProvider
+tech.kaffa.portrait.internal.WellKnownPortraitProvider
 com.example.CustomPortraitProvider
 ```
 
@@ -495,7 +495,7 @@ The codegen module can be integrated with build tools:
 ```kotlin
 // Gradle plugin integration
 application {
-    mainClass.set("kaffa.portrait.codegen.PortraitCodegen")
+    mainClass.set("tech.kaffa.portrait.codegen.PortraitCodegen")
 }
 ```
 

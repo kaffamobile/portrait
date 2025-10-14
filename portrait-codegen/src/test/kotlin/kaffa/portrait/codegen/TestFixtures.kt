@@ -1,11 +1,11 @@
 @file:Suppress("unused", "UNUSED_PARAMETER")
 
-package kaffa.portrait.codegen
+package tech.kaffa.portrait.codegen
 
-import kaffa.portrait.Includes
-import kaffa.portrait.PClass
-import kaffa.portrait.ProxyTarget
-import kaffa.portrait.Reflective
+import tech.kaffa.portrait.Includes
+import tech.kaffa.portrait.PClass
+import tech.kaffa.portrait.ProxyTarget
+import tech.kaffa.portrait.Reflective
 
 /**
  * Common test fixtures and sample classes used across Portrait tests.

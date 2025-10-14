@@ -70,7 +70,7 @@ dependencies {
 
 ### Main Entry Points
 
-**Primary API**: `kaffa.portrait.Portrait`
+**Primary API**: `tech.kaffa.portrait.Portrait`
 
 ```kotlin
 Portrait.of(MyClass::class.java)           // From Class
@@ -79,7 +79,7 @@ Portrait.forName("com.example.MyClass")    // By name
 Portrait.forNameOrUnresolved(name)         // Safe lookup
 ```
 
-**Extension Properties**: `kaffa.portrait.Extensions`
+**Extension Properties**: `tech.kaffa.portrait.Extensions`
 
 ```kotlin
 MyClass::class.portrait                    // KClass → PClass
@@ -302,7 +302,7 @@ Portrait enables deployment to:
 | Issue                                   | Cause                     | Solution                                                               |
 |-----------------------------------------|---------------------------|------------------------------------------------------------------------|
 | Missing reflection support              | Class not annotated       | Add `@Reflective` or use `@Reflective.Include`                         |
-| `RuntimeException: No PortraitProvider` | Provider not registered   | Ensure provider in `META-INF/services/kaffa.portrait.provider.PortraitProvider` |
+| `RuntimeException: No PortraitProvider` | Provider not registered   | Ensure provider in `META-INF/services/tech.kaffa.portrait.provider.PortraitProvider` |
 | Local class resolution fails            | Local classes unsupported | Use top-level classes or TestFixtures                                  |
 | Circular dependency errors              | Missing lazy loading      | Portrait handles automatically via caching - shouldn't occur           |
 

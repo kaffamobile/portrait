@@ -48,7 +48,7 @@ val runCodegen by tasks.registering(JavaExec::class) {
     // Include both codegen runtime classpath AND the compiled classes being processed
     classpath = project(":portrait-codegen").sourceSets.main.get().runtimeClasspath +
                 files(layout.buildDirectory.dir("classes/kotlin/main"))
-    mainClass.set("kaffa.portrait.codegen.cli.PortraitKt")
+    mainClass.set("tech.kaffa.portrait.codegen.cli.PortraitKt")
 
     // Pass the compiled classes directory and output folder path
     args = listOf(

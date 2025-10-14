@@ -9,7 +9,7 @@ repositories {
 }
 
 application {
-    mainClass.set("kaffa.portrait.codegen.cli.PortraitKt")
+    mainClass.set("tech.kaffa.portrait.codegen.cli.PortraitKt")
 }
 
 dependencies {
