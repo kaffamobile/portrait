@@ -5,6 +5,7 @@ import tech.kaffa.portrait.PClass
 import tech.kaffa.portrait.PMethod
 import tech.kaffa.portrait.Portrait
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 
 /**
  * JVM implementation of PMethod using Java reflection.
@@ -62,12 +63,12 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
     override val parameterCount: Int = method.parameterCount
     override val returnType: PClass<*> by lazy { Portrait.of(method.returnType) }
     override val declaringClass: PClass<*> by lazy { Portrait.of(method.declaringClass) }
-    override val isPublic: Boolean = java.lang.reflect.Modifier.isPublic(method.modifiers)
-    override val isPrivate: Boolean = java.lang.reflect.Modifier.isPrivate(method.modifiers)
-    override val isProtected: Boolean = java.lang.reflect.Modifier.isProtected(method.modifiers)
-    override val isStatic: Boolean = java.lang.reflect.Modifier.isStatic(method.modifiers)
-    override val isFinal: Boolean = java.lang.reflect.Modifier.isFinal(method.modifiers)
-    override val isAbstract: Boolean = java.lang.reflect.Modifier.isAbstract(method.modifiers)
+    override val isPublic: Boolean = Modifier.isPublic(method.modifiers)
+    override val isPrivate: Boolean = Modifier.isPrivate(method.modifiers)
+    override val isProtected: Boolean = Modifier.isProtected(method.modifiers)
+    override val isStatic: Boolean = Modifier.isStatic(method.modifiers)
+    override val isFinal: Boolean = Modifier.isFinal(method.modifiers)
+    override val isAbstract: Boolean = Modifier.isAbstract(method.modifiers)
 
     override fun invoke(instance: Any?, vararg args: Any?): Any? {
         if (!method.isAccessible) {
