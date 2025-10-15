@@ -28,13 +28,6 @@ class ClasspathScannerTest {
         assertNotNull(result)
         assertNotNull(result.reflectives)
         assertNotNull(result.proxyTargets)
-
-        // Should find some classes (at least the test fixtures)
-        val reflectivesList = result.reflectives.toList()
-        val proxyTargetsList = result.proxyTargets.toList()
-
-        // These might be empty if annotations aren't processed correctly in test environment
-        // but the scanner should not crash
     }
 
     @Test
@@ -75,20 +68,18 @@ class ClasspathScannerTest {
 
     @Test
     fun `ClasspathScanner can find test fixture classes`() {
-        val currentClasspath = System.getProperty("java.class.path")
-        val result = ClasspathScanner(currentClasspath).scan()
+        val result = ClasspathScanner("").scan()
 
+        println(result)
         val reflectiveClasses = result.reflectives.toList()
         val proxyTargetClasses = result.proxyTargets.toList()
 
         // Check if we can find our test fixture classes
-        val reflectiveNames = reflectiveClasses.map { it.name }
-        val proxyTargetNames = proxyTargetClasses.map { it.name }
 
         // Test fixtures should be found if they have the annotations
         // This is dependent on the test fixture classes being properly annotated
-        assertTrue(reflectiveNames.isNotEmpty() || reflectiveClasses.isEmpty()) // Either found or empty is ok for unit tests
-        assertTrue(proxyTargetNames.isNotEmpty() || proxyTargetClasses.isEmpty()) // Either found or empty is ok for unit tests
+        assertTrue(reflectiveClasses.isNotEmpty()) // Either found or empty is ok for unit tests
+        assertTrue(proxyTargetClasses.isNotEmpty()) // Either found or empty is ok for unit tests
     }
 
     @Test
@@ -150,7 +141,7 @@ class ClasspathScannerTest {
         val currentClasspath = System.getProperty("java.class.path")
 
         ClasspathScanner(currentClasspath).scan().use { result ->
-            val reflectiveNames = result.reflectiveClassNames
+            val reflectiveNames = result.reflectives
 
             assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeRoot" in reflectiveNames)
             assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeBase" in reflectiveNames)

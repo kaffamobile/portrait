@@ -1,48 +1,69 @@
 package tech.kaffa.portrait
 
 /**
- * Defines which related types should be included when processing an annotation.
- *
- * These options allow fine-grained control over the type hierarchy:
- * - DIRECT_SUBTYPES: Only immediate subclasses/subinterfaces
- * - DIRECT_SUPERTYPES: Only immediate superclasses/superinterfaces
- * - ALL_SUBTYPES: Entire subtype hierarchy (transitive)
- * - ALL_SUPERTYPES: Entire supertype hierarchy (transitive)
- * - PUBLIC_API: All public API surface reachable from the type (public methods,
- *   constructors, and fields along with the types they reference)
- * - PUBLIC_API_SUPERTYPES: PUBLIC_API plus all supertypes of every discovered type
- * - PUBLIC_API_SUBTYPES: PUBLIC_API plus all subtypes of every discovered type
- *
- * Multiple values can be combined, e.g., [ALL_SUBTYPES, DIRECT_SUPERTYPES]
+ * Enumeration defining the inclusion options for related types
+ * when processing annotations in Portrait.
  */
 enum class Includes {
+
+    /**
+     * Includes only the **immediate subclasses or subinterfaces** of a given type.
+     *
+     * Use this when only direct descendants are relevant,
+     * avoiding traversal into deeper subtype hierarchies.
+     */
     DIRECT_SUBTYPES,
+
+    /**
+     * Includes only the **immediate superclasses or superinterfaces** of a given type.
+     *
+     * Useful for retrieving direct parent types without
+     * walking the entire supertype chain.
+     */
     DIRECT_SUPERTYPES,
+
+    /**
+     * Includes **all transitive subtypes** of a given type.
+     *
+     * This recursively traverses the full subtype hierarchy,
+     * making all descendants (at any depth) available for processing.
+     */
     ALL_SUBTYPES,
+
+    /**
+     * Includes **all transitive supertypes** of a given type.
+     *
+     * This recursively collects all ancestor classes and interfaces,
+     * ensuring complete access to inherited metadata.
+     */
     ALL_SUPERTYPES,
 
     /**
-     * Includes all classes referenced from the public API of a type.
+     * Includes all **types referenced by the public API** of a given type.
      *
-     * This traverses the signatures of public methods (return types and parameters),
-     * public constructors, and public fields to ensure the entire public surface
-     * is available to Portrait code generation.
+     * Traverses:
+     * - Public method signatures (return types and parameters)
+     * - Public constructors
+     * - Public fields
+     *
+     * Ensures that all types reachable through the public API
+     * are included for Portrait code generation.
      */
     PUBLIC_API,
 
     /**
-     * Includes all supertypes for the types discovered via [PUBLIC_API].
+     * Includes all **supertypes** of the types discovered via [PUBLIC_API].
      *
-     * Use together with [PUBLIC_API] when the code generator needs metadata for
-     * superclasses or super-interfaces referenced by the public surface.
+     * Use together with [PUBLIC_API] when superclass or interface metadata
+     * is required for accurate model generation.
      */
     PUBLIC_API_SUPERTYPES,
 
     /**
-     * Includes all subtypes for the types discovered via [PUBLIC_API].
+     * Includes all **subtypes** of the types discovered via [PUBLIC_API].
      *
-     * Use together with [PUBLIC_API] when the code generator needs metadata for
-     * subclasses or implementing types reachable from the public surface.
+     * Use together with [PUBLIC_API] when subclass or implementation
+     * details are needed to fully capture type relationships.
      */
     PUBLIC_API_SUBTYPES
 }

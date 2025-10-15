@@ -12,7 +12,6 @@ import tech.kaffa.portrait.Reflective
  */
 
 @Reflective
-@ProxyTarget
 data class TestDataClass(
     val id: Int,
     val name: String,
@@ -28,6 +27,7 @@ data class TestDataClass(
 }
 
 @Reflective
+@ProxyTarget
 interface TestInterface {
     fun doSomething(): String
     fun processValue(value: Int): Int

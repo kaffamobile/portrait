@@ -6,7 +6,9 @@ import net.bytebuddy.description.annotation.AnnotationDescription
 import net.bytebuddy.description.annotation.AnnotationList
 import net.bytebuddy.description.method.MethodDescription
 import net.bytebuddy.description.method.MethodList
+import net.bytebuddy.description.method.ParameterList
 import net.bytebuddy.description.type.TypeDescription
+import net.bytebuddy.description.type.TypeList
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -70,10 +72,10 @@ class UtilsTest {
         val mockTypeDesc = mockk<TypeDescription>()
         val mockInterface1 = mockk<TypeDescription>()
         val mockInterface2 = mockk<TypeDescription>()
-        val mockInterfaceList = mockk<net.bytebuddy.description.type.TypeList.Generic>()
+        val mockInterfaceList = mockk<TypeList.Generic>()
 
         every { mockTypeDesc.interfaces } returns mockInterfaceList
-        every { mockInterfaceList.asErasures() } returns net.bytebuddy.description.type.TypeList.Explicit(
+        every { mockInterfaceList.asErasures() } returns TypeList.Explicit(
             mockInterface1,
             mockInterface2
         )
@@ -89,12 +91,12 @@ class UtilsTest {
     @Test
     fun `MethodDescription parameter type names extraction`() {
         val mockMethodDesc = mockk<MethodDescription>()
-        val mockParameterList = mockk<net.bytebuddy.description.method.ParameterList<*>>()
+        val mockParameterList = mockk<ParameterList<*>>()
         val mockParam1 = mockk<TypeDescription.Generic>()
         val mockParam2 = mockk<TypeDescription.Generic>()
 
         every { mockMethodDesc.parameters } returns mockParameterList
-        every { mockParameterList.asTypeList() } returns net.bytebuddy.description.type.TypeList.Generic.Explicit(
+        every { mockParameterList.asTypeList() } returns TypeList.Generic.Explicit(
             mockParam1,
             mockParam2
         )
@@ -136,8 +138,8 @@ class UtilsTest {
     fun `Extension functions handle empty collections`() {
         val mockTypeDesc = mockk<TypeDescription>()
 
-        every { mockTypeDesc.interfaces } returns net.bytebuddy.description.type.TypeList.Generic.Empty()
-        every { mockTypeDesc.interfaces.asErasures() } returns net.bytebuddy.description.type.TypeList.Empty()
+        every { mockTypeDesc.interfaces } returns TypeList.Generic.Empty()
+        every { mockTypeDesc.interfaces.asErasures() } returns TypeList.Empty()
         every { mockTypeDesc.declaredAnnotations } returns AnnotationList.Empty()
 
         assertEquals(emptyList(), mockTypeDesc.interfaceNames())
