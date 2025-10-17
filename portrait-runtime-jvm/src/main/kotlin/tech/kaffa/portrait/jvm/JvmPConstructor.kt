@@ -92,8 +92,4 @@ internal class JvmPConstructor<T : Any>(private val constructor: Constructor<T>)
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        other is JvmPConstructor<*> && constructor == other.constructor
-
-    override fun hashCode(): Int = constructor.hashCode()
 }

@@ -88,8 +88,4 @@ internal class JvmPField(private val field: Field) : PField() {
         return field.isAnnotationPresent(javaClass)
     }
 
-    override fun equals(other: Any?): Boolean =
-        other is JvmPField && field == other.field
-
-    override fun hashCode(): Int = field.hashCode()
 }

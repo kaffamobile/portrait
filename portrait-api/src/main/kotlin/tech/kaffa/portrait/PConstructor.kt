@@ -89,8 +89,22 @@ abstract class PConstructor<T : Any> {
     }
 
     override fun hashCode(): Int {
-        var result = declaringClass.hashCode()
-        result = 31 * result + parameterTypes.hashCode()
+        fun mix(seed: Int, value: Int): Int = seed * 31 + value
+
+        var result = declaringClass.qualifiedName.hashCode()
+
+        result = mix(result, parameterTypes.size)
+        for (parameter in parameterTypes) {
+            result = mix(result, parameter.qualifiedName.hashCode())
+        }
+
+        val visibility = (if (isPublic) 1 else 0) or
+            (if (isPrivate) 1 shl 1 else 0) or
+            (if (isProtected) 1 shl 2 else 0)
+        result = mix(result, visibility)
+
+        result = mix(result, annotations.size)
+
         return result
     }
 }

@@ -96,6 +96,60 @@ abstract class PMethod {
         }
     }
 
+    final override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PMethod) return false
+
+        if (declaringClass.qualifiedName != other.declaringClass.qualifiedName) return false
+        if (name != other.name) return false
+        if (returnType.qualifiedName != other.returnType.qualifiedName) return false
+
+        if (parameterTypes.size != other.parameterTypes.size) return false
+        val parametersMatch = parameterTypes.zip(other.parameterTypes).all { (actual, expected) ->
+            actual.qualifiedName == expected.qualifiedName
+        }
+        if (!parametersMatch) return false
+
+        val flagsMatch = isPublic == other.isPublic &&
+            isPrivate == other.isPrivate &&
+            isProtected == other.isProtected &&
+            isStatic == other.isStatic &&
+            isFinal == other.isFinal &&
+            isAbstract == other.isAbstract
+        if (!flagsMatch) return false
+
+        if (annotations.size != other.annotations.size) return false
+        if (parameterAnnotations.size != other.parameterAnnotations.size) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        fun mix(seed: Int, value: Int): Int = seed * 31 + value
+
+        var result = declaringClass.qualifiedName.hashCode()
+        result = mix(result, name.hashCode())
+        result = mix(result, returnType.qualifiedName.hashCode())
+
+        result = mix(result, parameterTypes.size)
+        for (parameter in parameterTypes) {
+            result = mix(result, parameter.qualifiedName.hashCode())
+        }
+
+        val flags = (if (isPublic) 1 else 0) or
+            (if (isPrivate) 1 shl 1 else 0) or
+            (if (isProtected) 1 shl 2 else 0) or
+            (if (isStatic) 1 shl 3 else 0) or
+            (if (isFinal) 1 shl 4 else 0) or
+            (if (isAbstract) 1 shl 5 else 0)
+        result = mix(result, flags)
+
+        result = mix(result, annotations.size)
+        result = mix(result, parameterAnnotations.size)
+
+        return result
+    }
+
     override fun toString(): String =
         "${declaringClass.simpleName}.$name(${parameterTypes.joinToString { it.simpleName }}): ${returnType.simpleName}"
 }

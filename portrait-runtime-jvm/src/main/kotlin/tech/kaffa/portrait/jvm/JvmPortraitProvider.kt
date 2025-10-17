@@ -37,13 +37,8 @@ class JvmPortraitProvider : PortraitProvider {
     override fun <T : Any> forName(className: String): PClass<T>? {
         return try {
             @Suppress("UNCHECKED_CAST")
-            val clazz = Class.forName(className) as Class<T>
-            JvmPClass(clazz.kotlin)
-        } catch (e: ClassNotFoundException) {
-            e.printStackTrace()
-            null
+            JvmPClass((Class.forName(className) as Class<T>).kotlin)
         } catch (e: Exception) {
-            e.printStackTrace()
             null
         }
     }

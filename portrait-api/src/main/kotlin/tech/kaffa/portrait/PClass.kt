@@ -289,7 +289,7 @@ abstract class PClass<T : Any> {
      * @param handler callback that receives the proxy instance, the invoked method descriptor,
      * and the raw argument array
      * @return a proxy instance compatible with the represented type
-     * @throws ProxyCreationException if the target type cannot be proxied on the current runtime
+     * @throws tech.kaffa.portrait.proxy.ProxyCreationException if the target type cannot be proxied on the current runtime
      * @throws IllegalArgumentException when the descriptor does not represent a proxyable type
      */
     abstract fun createProxy(handler: ProxyHandler<T>): T
@@ -307,9 +307,32 @@ abstract class PClass<T : Any> {
     }
 
     /**
-     * Hash code derived from [qualifiedName] so descriptors remain usable as map keys.
+     * Hash code derived from the qualified name and structural metadata to minimise collisions
+     * without triggering recursive member hashing.
      */
-    override fun hashCode(): Int = qualifiedName.hashCode()
+    override fun hashCode(): Int {
+        fun mix(seed: Int, value: Int): Int = seed * 31 + value
+
+        var result = qualifiedName.hashCode()
+
+        val flags = (if (isAbstract) 1 else 0) or
+            (if (isSealed) 1 shl 1 else 0) or
+            (if (isData) 1 shl 2 else 0) or
+            (if (isCompanion) 1 shl 3 else 0) or
+            (if (isPrimitive) 1 shl 4 else 0)
+        result = mix(result, flags)
+
+        val superNameHash = superclass?.qualifiedName?.hashCode() ?: 0
+        result = mix(result, superNameHash)
+
+        result = mix(result, interfaces.size)
+        result = mix(result, constructors.size)
+        result = mix(result, methods.size)
+        result = mix(result, fields.size)
+        result = mix(result, annotations.size)
+
+        return result
+    }
 
     /**
      * Human-readable representation that echoes the type flags and qualified name.

@@ -103,8 +103,4 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
         }
     }
 
-    override fun equals(other: Any?): Boolean =
-        other is JvmPMethod && method == other.method
-
-    override fun hashCode(): Int = method.hashCode()
 }
