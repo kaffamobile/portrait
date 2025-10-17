@@ -22,7 +22,7 @@ class InternalPortraitProvider : PortraitProvider {
         return when {
             // Handle primitive types
             className in BoxedPrimitives.boxing.keys -> {
-                return PrimitivePClass(className, BoxedPrimitives.boxing[className] ?: return null)
+                return PrimitivePClass(className)
             }
 
             // Handle array types

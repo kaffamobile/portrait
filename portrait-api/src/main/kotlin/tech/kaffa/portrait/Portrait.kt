@@ -2,7 +2,6 @@ package tech.kaffa.portrait
 
 import tech.kaffa.portrait.internal.UnresolvedPClass
 import tech.kaffa.portrait.provider.PortraitProvider
-import tech.kaffa.portrait.proxy.ProxyHandler
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
@@ -40,33 +39,12 @@ object Portrait {
      */
     private val cache = ConcurrentHashMap<String, PClass<*>>()
 
+    private const val LOADING_SENTINEL_NAME = "<portrait:loading>"
+
     /**
      * Sentinel value to mark classes that are currently being loaded to detect cycles.
      */
-    private val loadingMarker = object : PClass<Any>() {
-        override val simpleName = "LOADING"
-        override val qualifiedName = "LOADING"
-        override val isAbstract = false
-        override val isSealed = false
-        override val isData = false
-        override val isCompanion = false
-        override val objectInstance = null
-        override val superclass = null
-        override val interfaces = emptyList<PClass<*>>()
-        override fun createInstance(vararg args: Any?) = throw UnsupportedOperationException()
-        override fun isAssignableFrom(other: PClass<*>) = false
-        override fun isSubclassOf(other: PClass<*>) = false
-        override val annotations = emptyList<PAnnotation>()
-        override fun getAnnotation(annotationClass: PClass<*>) = null
-        override fun hasAnnotation(annotationClass: PClass<*>) = false
-        override val constructors = emptyList<PConstructor<Any>>()
-        override fun getConstructor(vararg parameterTypes: PClass<*>) = null
-        override val methods = emptyList<PMethod>()
-        override fun getMethod(name: String, vararg parameterTypes: PClass<*>) = null
-        override val fields = emptyList<PField>()
-        override fun getField(name: String) = null
-        override fun createProxy(handler: ProxyHandler<Any>) = throw UnsupportedOperationException()
-    }
+    private val loadingMarker: PClass<*> = UnresolvedPClass<Any>(LOADING_SENTINEL_NAME)
 
     /**
      * Creates a PClass from a Java Class object.

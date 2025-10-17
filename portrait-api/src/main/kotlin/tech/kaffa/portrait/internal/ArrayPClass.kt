@@ -82,7 +82,24 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
         throw UnsupportedOperationException("Cannot create proxy for array type $simpleName")
     }
 
-    override fun toString(): String = "WellKnownArrayPClass($simpleName)"
+    override fun toString(): String {
+        val displayName = descriptorToReadableName(arrayTypeName)
+        return buildString {
+            append("PClass[array](")
+
+            val (component, dims) = splitArray(arrayTypeName)
+            append(
+                primitiveMap.getOrElse(component) {
+                    component
+                        .removeSurrounding("L", ";")
+                        .replace("/", ".")
+                }
+            )
+            repeat(dims) { append("[]") }
+            append(displayName)
+            append(")")
+        }
+    }
 
     companion object {
         private const val OBJECT_CLASS_NAME: String = "java.lang.Object"
@@ -125,6 +142,22 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
 
         private fun isJavaLangObjectDescriptor(descriptor: String): Boolean {
             return descriptor == "Ljava.lang.Object;" || descriptor == "Ljava/lang/Object;"
+        }
+
+        private fun descriptorToReadableName(descriptor: String): String {
+            val (component, dims) = splitArray(descriptor)
+            val baseName = when {
+                component in primitiveMap -> primitiveMap.getValue(component)
+                component == "V" -> "void"
+                component.startsWith("L") && component.endsWith(";") ->
+                    component.substring(1, component.length - 1).replace("/", ".")
+                else -> component
+            }
+
+            return buildString {
+                append(baseName)
+                repeat(dims) { append("[]") }
+            }
         }
 
         private fun isArrayAssignableFrom(targetDescriptor: String, sourceDescriptor: String): Boolean {

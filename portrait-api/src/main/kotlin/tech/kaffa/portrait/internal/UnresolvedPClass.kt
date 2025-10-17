@@ -65,7 +65,13 @@ class UnresolvedPClass<T : Any>(
         throw UnsupportedOperationException("Cannot create proxy for unresolved type: $className")
     }
 
-    override fun toString(): String = "UnresolvedPClass($className)"
+    override fun toString(): String {
+        return buildString {
+            append("PClass[unresolved](")
+            append(qualifiedName)
+            append(")")
+        }
+    }
 
     /**
      * Indicates that this PClass represents an unresolved type.

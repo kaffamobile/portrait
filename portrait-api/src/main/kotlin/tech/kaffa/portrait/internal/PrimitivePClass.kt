@@ -10,10 +10,8 @@ import tech.kaffa.portrait.proxy.ProxyHandler
 /**
  * PClass implementation for primitive types.
  */
-internal class PrimitivePClass<T : Any>(
-    private val primitiveTypeName: String,
-    private val wrapperTypeName: String
-) : PClass<T>() {
+internal class PrimitivePClass<T : Any>(primitiveTypeName: String) : PClass<T>() {
+    private val wrapperTypeName = BoxedPrimitives.boxing[primitiveTypeName]
 
     override val simpleName: String = primitiveTypeName
     override val qualifiedName: String = primitiveTypeName
@@ -31,8 +29,7 @@ internal class PrimitivePClass<T : Any>(
     }
 
     override fun isAssignableFrom(other: PClass<*>): Boolean {
-        return other.qualifiedName == this.qualifiedName ||
-                other.qualifiedName == wrapperTypeName
+        return other.qualifiedName == this.qualifiedName || other.qualifiedName == wrapperTypeName
     }
 
     override fun isSubclassOf(other: PClass<*>): Boolean {
@@ -56,5 +53,5 @@ internal class PrimitivePClass<T : Any>(
         throw UnsupportedOperationException("Cannot create proxy for primitive type $simpleName")
     }
 
-    override fun toString(): String = "WellKnownPrimitivePClass($simpleName)"
+    override fun toString(): String = "PClass[primitive](${qualifiedName})"
 }
