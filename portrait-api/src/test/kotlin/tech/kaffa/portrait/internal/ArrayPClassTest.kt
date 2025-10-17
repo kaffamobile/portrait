@@ -45,4 +45,30 @@ class ArrayPClassTest {
             "Object[] must not be assignable from int[]"
         )
     }
+
+    @Test
+    fun `reference arrays are subclasses of covariant parents`() {
+        val objectArray = Portrait.forName("[Ljava.lang.Object;")
+        val stringArray = Portrait.forName("[Ljava.lang.String;")
+
+        assertTrue(
+            stringArray.isSubclassOf(objectArray),
+            "String[] should be a subclass of Object[]"
+        )
+        assertFalse(
+            objectArray.isSubclassOf(stringArray),
+            "Object[] must not be a subclass of String[]"
+        )
+    }
+
+    @Test
+    fun `primitive arrays are not subclasses of reference arrays`() {
+        val objectArray = Portrait.forName("[Ljava.lang.Object;")
+        val intArray = Portrait.forName("[I")
+
+        assertFalse(
+            intArray.isSubclassOf(objectArray),
+            "int[] must not be a subclass of Object[]"
+        )
+    }
 }

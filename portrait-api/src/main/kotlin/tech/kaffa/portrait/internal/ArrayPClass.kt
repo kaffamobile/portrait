@@ -12,30 +12,15 @@ import tech.kaffa.portrait.proxy.ProxyHandler
  * PClass implementation for array types of well-known classes.
  */
 internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<T>() {
+
     override val simpleName: String by lazy {
-        // Convert array notation to simple name like "[I" -> "int[]"
-        var dimensions = 0
-        var name = arrayTypeName
-        while (name.startsWith("[")) {
-            dimensions++
-            name = name.substring(1)
-        }
-        val baseName = when {
-            name == "Z" -> "boolean"
-            name == "B" -> "byte"
-            name == "C" -> "char"
-            name == "S" -> "short"
-            name == "I" -> "int"
-            name == "J" -> "long"
-            name == "F" -> "float"
-            name == "D" -> "double"
-            name.startsWith("L") && name.endsWith(";") -> {
-                val fullName = name.substring(1, name.length - 1).replace("/", ".")
-                fullName.substringAfterLast('.')
-            }
-            else -> name
-        }
-        baseName + "[]".repeat(dimensions)
+        val (component, dims) = splitArray(arrayTypeName)
+        primitiveMap.getOrElse(component) {
+            component
+                .removeSurrounding("L", ";")
+                .replace("/", ".")
+                .substringAfterLast('.')
+        }  + "[]".repeat(dims)
     }
 
     override val qualifiedName: String = arrayTypeName
@@ -60,47 +45,24 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
     }
 
     override fun isAssignableFrom(other: PClass<*>): Boolean {
+        if (this === other) return true
         val otherName = other.qualifiedName
         if (!otherName.startsWith("[")) return false
-        if (otherName == arrayTypeName) return true
-
-        val thisComponentDescriptor = componentDescriptor ?: return false
-        val otherComponentDescriptor = otherName.substring(1)
-
-        if (thisComponentDescriptor == otherComponentDescriptor) return true
-        if (isPrimitiveDescriptor(thisComponentDescriptor) || isPrimitiveDescriptor(otherComponentDescriptor)) {
-            return false
-        }
-
-        if (isJavaLangObjectDescriptor(thisComponentDescriptor)) {
-            return !isPrimitiveDescriptor(otherComponentDescriptor)
-        }
-
-        if (thisComponentDescriptor.startsWith("[") && otherComponentDescriptor.startsWith("[")) {
-            val thisComponent = Portrait.forNameOrUnresolved(thisComponentDescriptor)
-            val otherComponent = Portrait.forNameOrUnresolved(otherComponentDescriptor)
-            if (Portrait.isUnresolved(thisComponent) || Portrait.isUnresolved(otherComponent)) {
-                return false
-            }
-            return thisComponent.isAssignableFrom(otherComponent)
-        }
-
-        val thisComponentName = descriptorToClassName(thisComponentDescriptor) ?: return false
-        val otherComponentName = descriptorToClassName(otherComponentDescriptor) ?: return false
-
-        val thisComponent = Portrait.forNameOrUnresolved(thisComponentName)
-        val otherComponent = Portrait.forNameOrUnresolved(otherComponentName)
-        if (Portrait.isUnresolved(thisComponent) || Portrait.isUnresolved(otherComponent)) {
-            return false
-        }
-        return thisComponent.isAssignableFrom(otherComponent)
+        return isArrayAssignableFrom(arrayTypeName, otherName)
     }
 
     override fun isSubclassOf(other: PClass<*>): Boolean {
+        if (this === other) return true
+        if (qualifiedName == other.qualifiedName) return true
+
         val otherName = other.qualifiedName
-        return otherName == OBJECT_CLASS_NAME ||
-                otherName == CLONEABLE_CLASS_NAME ||
-                otherName == SERIALIZABLE_CLASS_NAME
+        return when {
+            otherName == OBJECT_CLASS_NAME
+                || otherName == CLONEABLE_CLASS_NAME
+                || otherName == SERIALIZABLE_CLASS_NAME -> true
+            !otherName.startsWith("[") -> false
+            else -> isArrayAssignableFrom(otherName, arrayTypeName)
+        }
     }
 
     override val annotations: List<PAnnotation> = emptyList()
@@ -123,40 +85,91 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
     override fun toString(): String = "WellKnownArrayPClass($simpleName)"
 
     companion object {
-        /** Canonical type name for `java.lang.Object`. */
         private const val OBJECT_CLASS_NAME: String = "java.lang.Object"
         private const val CLONEABLE_CLASS_NAME: String = "java.lang.Cloneable"
         private const val SERIALIZABLE_CLASS_NAME: String = "java.io.Serializable"
 
-        private val PRIMITIVE_DESCRIPTORS = setOf("Z", "B", "C", "S", "I", "J", "F", "D")
+        private val primitiveMap = mapOf(
+            "Z" to "boolean",
+            "B" to "byte",
+            "C" to "char",
+            "S" to "short",
+            "I" to "int",
+            "J" to "long",
+            "F" to "float",
+            "D" to "double",
+        )
 
-        private fun isPrimitiveDescriptor(descriptor: String): Boolean {
-            return PRIMITIVE_DESCRIPTORS.contains(descriptor)
+        private data class ArraySplit(val component: String, val dimensions: Int)
+
+        /** Strips leading '[' and returns the non-array component + dimension count. */
+        private fun splitArray(descriptor: String): ArraySplit {
+            var dims = 0
+            var s = descriptor
+            while (s.startsWith("[")) {
+                dims++
+                s = s.substring(1)
+            }
+            return ArraySplit(s, dims)
+        }
+
+        /** Fully-qualified base name (or primitive keyword) from a non-array component descriptor. */
+        private fun qualifiedNameFromComponent(component: String): String? = when {
+            component in primitiveMap -> primitiveMap.getValue(component)
+            component == "V" -> null
+            component.startsWith("L") && component.endsWith(";") ->
+                component.substring(1, component.length - 1).replace("/", ".")
+            component.startsWith("[") -> component // already an array component; keep as-is
+            else -> null
         }
 
         private fun isJavaLangObjectDescriptor(descriptor: String): Boolean {
             return descriptor == "Ljava.lang.Object;" || descriptor == "Ljava/lang/Object;"
         }
 
-        private fun descriptorToClassName(descriptor: String): String? {
-            return when {
-                descriptor.startsWith("[") -> descriptor
-                descriptor == "Z" -> "boolean"
-                descriptor == "B" -> "byte"
-                descriptor == "C" -> "char"
-                descriptor == "S" -> "short"
-                descriptor == "I" -> "int"
-                descriptor == "J" -> "long"
-                descriptor == "F" -> "float"
-                descriptor == "D" -> "double"
-                descriptor == "V" -> null
-                descriptor.startsWith("L") && descriptor.endsWith(";") -> descriptor.substring(1, descriptor.length - 1).replace("/", ".")
-                else -> null
-            }
-        }
-    }
+        private fun isArrayAssignableFrom(targetDescriptor: String, sourceDescriptor: String): Boolean {
+            // Both must be array descriptors like "[I" or "[[Ljava/lang/String;"
+            if (!targetDescriptor.startsWith("[")) return false
+            if (!sourceDescriptor.startsWith("[")) return false
 
-    private val componentDescriptor: String? by lazy {
-        if (!arrayTypeName.startsWith("[")) null else arrayTypeName.substring(1)
+            // Identical array descriptors are trivially assignable
+            if (targetDescriptor == sourceDescriptor) return true
+
+            // Strip one leading '[' to look at the immediate component
+            val targetComponent = targetDescriptor.substring(1)
+            val sourceComponent = sourceDescriptor.substring(1)
+
+            // Same immediate component → assignable (e.g., "[I" vs "[I", or "[[Ljava/lang/String;" vs same)
+            if (targetComponent == sourceComponent) return true
+
+            // If either component is a primitive, different primitives are never assignable
+            if (targetComponent in primitiveMap || sourceComponent in primitiveMap) {
+                return false
+            }
+
+            // Object[] can hold any non-primitive component (including arrays of reference types)
+            if (isJavaLangObjectDescriptor(targetComponent)) {
+                return sourceComponent !in primitiveMap
+            }
+
+            // If both components are arrays, recurse on the sub-arrays
+            val targetIsArray = targetComponent.startsWith("[")
+            val sourceIsArray = sourceComponent.startsWith("[")
+            if (targetIsArray && sourceIsArray) {
+                return isArrayAssignableFrom(targetComponent, sourceComponent)
+            }
+            // One is array and the other isn't (e.g., String[][] vs String[]) → not assignable
+            if (targetIsArray || sourceIsArray) return false
+
+            // Both components are reference types like "Ljava/lang/Number;" → resolve and check
+            val targetClassName = qualifiedNameFromComponent(targetComponent) ?: return false
+            val sourceClassName = qualifiedNameFromComponent(sourceComponent) ?: return false
+
+            val targetClass = Portrait.forNameOrUnresolved(targetClassName)
+            val sourceClass = Portrait.forNameOrUnresolved(sourceClassName)
+
+            if (Portrait.isUnresolved(targetClass) || Portrait.isUnresolved(sourceClass)) return false
+            return targetClass.isAssignableFrom(sourceClass)
+        }
     }
 }

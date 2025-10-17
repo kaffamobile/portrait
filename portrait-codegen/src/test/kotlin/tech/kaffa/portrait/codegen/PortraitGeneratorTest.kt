@@ -5,7 +5,6 @@ import io.github.classgraph.ScanResult
 import io.mockk.every
 import io.mockk.mockk
 import net.bytebuddy.dynamic.ClassFileLocator
-import net.bytebuddy.pool.TypePool
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.lang.reflect.Modifier
