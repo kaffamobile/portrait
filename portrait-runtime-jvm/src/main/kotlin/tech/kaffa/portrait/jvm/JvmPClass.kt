@@ -58,7 +58,6 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
             // Handle other types by class name lookup
             else -> {
                 val className = pClass.qualifiedName
-                    ?: throw IllegalArgumentException("Cannot determine class name for PClass: $pClass")
                 try {
                     Class.forName(className)
                 } catch (e: ClassNotFoundException) {
@@ -71,7 +70,7 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     override val superclass: PClass<*>? by lazy { kClass.java.superclass?.let { Portrait.of(it) } }
     override val interfaces: List<PClass<*>> by lazy { kClass.java.interfaces.map { Portrait.of(it) } }
     override val simpleName: String = kClass.simpleName ?: "<anonymous>"
-    override val qualifiedName: String? = kClass.java.name
+    override val qualifiedName: String = kClass.java.name
     override val isAbstract: Boolean = kClass.isAbstract
     override val isSealed: Boolean = kClass.isSealed
     override val isData: Boolean = kClass.isData
@@ -125,7 +124,7 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
             return true
         }
 
-        val wrapperPrimitive = qualifiedName?.let { BoxedPrimitives.unboxing[it] }
+        val wrapperPrimitive = BoxedPrimitives.unboxing[qualifiedName]
         return wrapperPrimitive != null &&
                 other.isPrimitive &&
                 other.qualifiedName == wrapperPrimitive
@@ -167,11 +166,11 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
         }
     }
 
-    override val declaredMethods: List<PMethod> by lazy {
+    override val methods: List<PMethod> by lazy {
         kClass.java.declaredMethods.map { JvmPMethod(it) }
     }
 
-    override fun getDeclaredMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? =
+    override fun getMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? =
         try {
             val javaTypes = parameterTypes.map { pClassToJavaClass(it) }.toTypedArray()
             JvmPMethod(kClass.java.getMethod(name, *javaTypes))
@@ -179,11 +178,11 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
             null
         }
 
-    override val declaredFields: List<PField> by lazy {
+    override val fields: List<PField> by lazy {
         kClass.java.declaredFields.map { JvmPField(it) }
     }
 
-    override fun getDeclaredField(name: String): PField? =
+    override fun getField(name: String): PField? =
         try {
             JvmPField(kClass.java.getDeclaredField(name))
         } catch (e: NoSuchFieldException) {

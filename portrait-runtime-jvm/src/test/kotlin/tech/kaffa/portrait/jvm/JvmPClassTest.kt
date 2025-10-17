@@ -30,12 +30,12 @@ class JvmPClassTest {
     fun `JvmPClass can find declared methods`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
 
-        val lengthMethod = stringPClass.getDeclaredMethod("length")
+        val lengthMethod = stringPClass.getMethod("length")
         assertNotNull(lengthMethod, "Should find length() method")
         assertEquals("length", lengthMethod.name)
         assertEquals(0, lengthMethod.parameterTypes.size)
 
-        val nonExistentMethod = stringPClass.getDeclaredMethod("nonExistent")
+        val nonExistentMethod = stringPClass.getMethod("nonExistent")
         assertNull(nonExistentMethod, "Should return null for non-existent method")
     }
 
@@ -44,7 +44,7 @@ class JvmPClassTest {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = Portrait.intClass()
 
-        val charAtMethod = stringPClass.getDeclaredMethod("charAt", intPClass)
+        val charAtMethod = stringPClass.getMethod("charAt", intPClass)
         assertNotNull(charAtMethod, "Should find charAt(int) method")
         assertEquals("charAt", charAtMethod.name)
         assertEquals(1, charAtMethod.parameterTypes.size)
@@ -54,7 +54,7 @@ class JvmPClassTest {
     fun `JvmPClass can find all declared methods`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
 
-        val methods = stringPClass.declaredMethods
+        val methods = stringPClass.methods
         assertTrue(methods.isNotEmpty(), "String should have declared methods")
 
         val methodNames = methods.map { it.name }.toSet()
@@ -68,7 +68,7 @@ class JvmPClassTest {
         // Use a class that we know has fields
         val testClassPClass = provider.forName<TestClass>("tech.kaffa.portrait.jvm.TestClass")!!
 
-        val fields = testClassPClass.declaredFields
+        val fields = testClassPClass.fields
         // TestClass should have some fields
         assertNotNull(fields)
     }
@@ -100,7 +100,7 @@ class JvmPClassTest {
         val interfaces = stringPClass.interfaces
         assertTrue(interfaces.isNotEmpty(), "String implements interfaces")
 
-        val interfaceNames = interfaces.map { it.qualifiedName?.substringAfterLast('.') ?: "" }
+        val interfaceNames = interfaces.map { it.qualifiedName.substringAfterLast('.') }
         assertTrue("Serializable" in interfaceNames, "String implements Serializable")
         assertTrue("Comparable" in interfaceNames, "String implements Comparable")
         assertTrue("CharSequence" in interfaceNames, "String implements CharSequence")
@@ -138,7 +138,7 @@ class JvmPClassTest {
 
         assertTrue(numberPClass.isAbstract, "Number should be abstract")
 
-        val methods = numberPClass.declaredMethods
+        val methods = numberPClass.methods
         val abstractMethods = methods.filter { it.isAbstract }
         assertTrue(abstractMethods.isNotEmpty(), "Number should have abstract methods")
     }

@@ -61,10 +61,10 @@ object Portrait {
         override fun hasAnnotation(annotationClass: PClass<*>) = false
         override val constructors = emptyList<PConstructor<Any>>()
         override fun getConstructor(vararg parameterTypes: PClass<*>) = null
-        override val declaredMethods = emptyList<PMethod>()
-        override fun getDeclaredMethod(name: String, vararg parameterTypes: PClass<*>) = null
-        override val declaredFields = emptyList<PField>()
-        override fun getDeclaredField(name: String) = null
+        override val methods = emptyList<PMethod>()
+        override fun getMethod(name: String, vararg parameterTypes: PClass<*>) = null
+        override val fields = emptyList<PField>()
+        override fun getField(name: String) = null
         override fun createProxy(handler: ProxyHandler<Any>) = throw UnsupportedOperationException()
     }
 
@@ -73,17 +73,20 @@ object Portrait {
      *
      * @param clazz The Java Class to wrap
      * @return A PClass representing the given class
+     * @throws IllegalArgumentException if the class has no canonical name (local/anonymous)
      * @throws PortraitNotFoundException if no provider can handle this class
      */
     @JvmStatic
     fun <T : Any> of(clazz: Class<T>): PClass<T> {
-        return load(clazz.name)
+        val className = requireQualifiedClass(clazz)
+        return load(className)
             ?: throw PortraitNotFoundException("Cannot create portrait for known Java class: ${clazz.name}")
     }
 
     @JvmStatic
     fun <T : Any> of(clazz: KClass<T>): PClass<T> {
-        return load(clazz.java.name)
+        val className = requireQualifiedClass(clazz.java)
+        return load(className)
             ?: throw PortraitNotFoundException("Cannot create portrait for known Kotlin class: ${clazz.java.name}")
     }
 
@@ -93,11 +96,13 @@ object Portrait {
      *
      * @param instance The object instance to get the class from
      * @return A PClass representing the instance's runtime type
+     * @throws IllegalArgumentException if the runtime type has no canonical name (local/anonymous)
      * @throws PortraitNotFoundException if no provider can handle this class
      */
     @JvmStatic
     fun <T : Any> from(instance: T): PClass<T> {
-        return load(instance.javaClass.name)
+        val className = requireQualifiedClass(instance.javaClass)
+        return load(className)
             ?: throw PortraitNotFoundException("Cannot create portrait for instance of type: ${instance.javaClass.name}")
     }
 
@@ -249,5 +254,27 @@ object Portrait {
                     throw RuntimeException("No PortraitProvider implementation found on classpath")
                 }
             }
+    }
+
+    /**
+     * Validates that the supplied [Class] exposes a canonical name so Portrait can use it as a
+     * stable lookup key. Local and anonymous classes don't meet this contract and must be rejected
+     * before reaching providers.
+     *
+     * @throws IllegalArgumentException when [clazz] lacks a canonical name
+     */
+    private fun requireQualifiedClass(clazz: Class<*>): String {
+        val canonicalName = clazz.canonicalName
+        if (canonicalName == null) {
+            val descriptor = when {
+                clazz.isAnonymousClass -> "anonymous"
+                clazz.isLocalClass -> "local"
+                else -> "synthetic"
+            }
+            throw IllegalArgumentException(
+                "Portrait cannot reflect $descriptor class ${clazz.name}. Local and anonymous classes are unsupported; provide a top-level or member type instead."
+            )
+        }
+        return clazz.name
     }
 }

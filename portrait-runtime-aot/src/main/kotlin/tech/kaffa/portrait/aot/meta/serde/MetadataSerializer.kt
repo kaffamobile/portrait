@@ -36,7 +36,7 @@ class MetadataSerializer {
 
     private fun collectClassStrings(clazz: PClassEntry) {
         stringPool.intern(clazz.simpleName)
-        clazz.qualifiedName?.let { stringPool.intern(it) }
+        stringPool.intern(clazz.qualifiedName)
         stringPool.intern(clazz.javaClassName)
         clazz.superclassName?.let { stringPool.intern(it) }
         clazz.interfaceNames.forEach { stringPool.intern(it) }
@@ -95,7 +95,7 @@ class MetadataSerializer {
 
     private fun writeClass(data: DataOutputStream, clazz: PClassEntry) {
         data.writeInt(stringPool.intern(clazz.simpleName))
-        data.writeInt(clazz.qualifiedName?.let { stringPool.intern(it) } ?: -1)
+        data.writeInt(stringPool.intern(clazz.qualifiedName))
         data.writeInt(buildClassFlags(clazz))
         data.writeInt(stringPool.intern(clazz.javaClassName))
         data.writeInt(clazz.superclassName?.let { stringPool.intern(it) } ?: -1)

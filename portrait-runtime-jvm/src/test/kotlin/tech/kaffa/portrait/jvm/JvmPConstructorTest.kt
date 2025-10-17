@@ -33,7 +33,6 @@ class JvmPConstructorTest {
         if (defaultConstructor != null) {
             val instance = defaultConstructor.call()
             assertNotNull(instance)
-            assertTrue(instance is TestClass)
         }
     }
 
@@ -49,7 +48,6 @@ class JvmPConstructorTest {
 
             val instance = parameterizedConstructor.call("test_value")
             assertNotNull(instance)
-            assertTrue(instance is TestClass)
             assertEquals("test_value", instance.getInternalValue())
         }
     }
@@ -94,7 +92,6 @@ class JvmPConstructorTest {
         if (primaryConstructor != null) {
             val instance = primaryConstructor.call(42, "test", true)
             assertNotNull(instance)
-            assertTrue(instance is TestDataClass)
             assertEquals(42, instance.id)
             assertEquals("test", instance.name)
             assertEquals(true, instance.active)
@@ -103,7 +100,6 @@ class JvmPConstructorTest {
         if (partialConstructor != null) {
             val instance = partialConstructor.call(42, "test")
             assertNotNull(instance)
-            assertTrue(instance is TestDataClass)
             assertEquals(42, instance.id)
             assertEquals("test", instance.name)
             assertEquals(true, instance.active) // default value

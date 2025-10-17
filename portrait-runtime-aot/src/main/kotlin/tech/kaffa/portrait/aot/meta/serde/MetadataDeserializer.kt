@@ -43,7 +43,10 @@ class MetadataDeserializer {
     private fun readClass(stream: DataInputStream, stringPool: ReadOnlyStringPool): PClassEntry {
         val simpleName = stringPool.getString(stream.readInt())
         val qualifiedNameIndex = stream.readInt()
-        val qualifiedName = if (qualifiedNameIndex == -1) null else stringPool.getString(qualifiedNameIndex)
+        if (qualifiedNameIndex == -1) {
+            throw IllegalArgumentException("Portrait metadata is missing a qualified name; regenerate codegen output with a newer version.")
+        }
+        val qualifiedName = stringPool.getString(qualifiedNameIndex)
         val flags = stream.readInt()
         val javaClassName = stringPool.getString(stream.readInt())
         val superclassNameIndex = stream.readInt()

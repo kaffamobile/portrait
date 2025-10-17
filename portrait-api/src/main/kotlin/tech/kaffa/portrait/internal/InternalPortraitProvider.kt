@@ -60,7 +60,8 @@ class InternalPortraitProvider : PortraitProvider {
             className == "J" -> "long"
             className == "F" -> "float"
             className == "D" -> "double"
-            className == "V" -> "void"
+            // Arrays of void are invalid in JVM descriptors
+            className == "V" -> null
             className.startsWith("L") && className.endsWith(";") -> {
                 className.substring(1, className.length - 1).replace("/", ".")
             }

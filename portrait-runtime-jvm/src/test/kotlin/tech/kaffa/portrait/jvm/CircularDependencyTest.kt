@@ -1,7 +1,9 @@
 package tech.kaffa.portrait.jvm
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 /**
  * Test to verify that circular dependencies are properly handled with lazy loading.
@@ -28,12 +30,12 @@ class CircularDependencyTest {
         assertNotNull(stringPClass.qualifiedName)
 
         // These properties are now lazy and won't trigger immediate evaluation
-        // but we can verify they exist and can be accessed when needed
-        val superclass = stringPClass.superclass  // This should be lazy-loaded
-        val interfaces = stringPClass.interfaces  // This should be lazy-loaded
-        val methods = stringPClass.declaredMethods  // This should be lazy-loaded
-        val fields = stringPClass.declaredFields  // This should be lazy-loaded
-        val constructors = stringPClass.constructors  // This should be lazy-loaded
+        // but we can verify they can be accessed when needed
+        assertDoesNotThrow { stringPClass.superclass }
+        assertDoesNotThrow { stringPClass.interfaces }
+        assertDoesNotThrow { stringPClass.methods }
+        assertDoesNotThrow { stringPClass.fields }
+        assertDoesNotThrow { stringPClass.constructors }
 
         // We don't need to assert specific values since the provider setup
         // may not be complete, but we should be able to access these properties
@@ -53,8 +55,11 @@ class CircularDependencyTest {
 
         // These operations should work without infinite recursion
         // because all PClass dependencies are now lazy-loaded
-        val stringSuper = stringPClass.superclass
-        val objectSuper = objectPClass.superclass
+        val stringSuper = assertDoesNotThrow { stringPClass.superclass }
+        val objectSuper = assertDoesNotThrow { objectPClass.superclass }
+
+        assertNotNull(stringSuper)
+        assertNull(objectSuper)
 
         // Even if these are null due to provider setup issues,
         // the important thing is that we don't get StackOverflowError

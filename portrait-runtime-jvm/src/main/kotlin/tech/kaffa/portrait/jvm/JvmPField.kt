@@ -47,12 +47,10 @@ internal class JvmPField(private val field: Field) : PField() {
 
             // Handle other types by class name lookup
             else -> {
-                val className = pClass.qualifiedName
-                    ?: throw IllegalArgumentException("Cannot determine class name for PClass: $pClass")
                 try {
-                    Class.forName(className)
+                    Class.forName(pClass.qualifiedName)
                 } catch (e: ClassNotFoundException) {
-                    throw IllegalArgumentException("Cannot find Java class for: $className", e)
+                    throw IllegalArgumentException("Cannot find Java class for: ${pClass.qualifiedName}", e)
                 }
             }
         }

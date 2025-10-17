@@ -2,6 +2,7 @@ package tech.kaffa.portrait.jvm
 
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -73,7 +74,7 @@ class JvmPAnnotationTest {
     @Test
     fun `JvmPAnnotation handles method annotations`() {
         val annotatedClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedMethod = annotatedClassPClass.getDeclaredMethod("annotatedMethod")
+        val annotatedMethod = annotatedClassPClass.getMethod("annotatedMethod")
 
         if (annotatedMethod != null) {
             val annotations = annotatedMethod.annotations
@@ -96,7 +97,7 @@ class JvmPAnnotationTest {
     @Test
     fun `JvmPAnnotation handles field annotations`() {
         val annotatedClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedField = annotatedClassPClass.getDeclaredField("annotatedField")
+        val annotatedField = annotatedClassPClass.getField("annotatedField")
 
         if (annotatedField != null) {
             val annotations = annotatedField.annotations
@@ -140,11 +141,8 @@ class JvmPAnnotationTest {
 
         if (annotation != null) {
             // Try to get string value as integer (should handle gracefully)
-            try {
-                val wrongType = annotation.getValue("value") // "value" is a String
-                // This might return null or throw exception depending on implementation
-            } catch (e: Exception) {
-                // Expected behavior for type mismatch
+            assertFailsWith<ClassCastException> {
+                (annotation.getValue("value") as Int)
             }
         }
     }
@@ -155,6 +153,7 @@ class JvmPAnnotationTest {
         @Deprecated("Test deprecation")
         class DeprecatedClass
 
+        @Suppress("DEPRECATION")
         val deprecatedClassPClass =
             provider.forName<DeprecatedClass>("tech.kaffa.portrait.jvm.JvmPAnnotationTest\$DeprecatedClass")
 

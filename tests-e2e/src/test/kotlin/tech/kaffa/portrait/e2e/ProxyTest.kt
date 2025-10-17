@@ -26,6 +26,7 @@ class ProxyTest {
         val pClass = Portrait.of(Calculator::class.java)
 
         val proxy = pClass.createProxy { self, method, args ->
+            requireNotNull(self)
             when (method.name) {
                 "add" -> {
                     val a = args!![0] as Int
@@ -41,7 +42,7 @@ class ProxyTest {
 
                 else -> throw UnsupportedOperationException("Unknown method: ${method.name}")
             }
-        } as Calculator
+        }
 
         assertEquals(8, proxy.add(5, 3))
         assertEquals(15, proxy.multiply(3, 5))
@@ -53,6 +54,7 @@ class ProxyTest {
         var callCount = 0
 
         val proxy = pClass.createProxy { self, method, args ->
+            requireNotNull(self)
             callCount++
             when (method.name) {
                 "add" -> {

@@ -46,11 +46,11 @@ internal class PrimitivePClass<T : Any>(
     override val constructors: List<PConstructor<T>> = emptyList()
     override fun getConstructor(vararg parameterTypes: PClass<*>): PConstructor<T>? = null
 
-    override val declaredMethods: List<PMethod> = emptyList()
-    override fun getDeclaredMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? = null
+    override val methods: List<PMethod> = emptyList()
+    override fun getMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? = null
 
-    override val declaredFields: List<PField> = emptyList()
-    override fun getDeclaredField(name: String): PField? = null
+    override val fields: List<PField> = emptyList()
+    override fun getField(name: String): PField? = null
 
     override fun createProxy(handler: ProxyHandler<T>): T {
         throw UnsupportedOperationException("Cannot create proxy for primitive type $simpleName")

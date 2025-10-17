@@ -15,7 +15,7 @@ class JvmPMethodTest {
     @Test
     fun `JvmPMethod basic properties`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
-        val lengthMethod = stringPClass.getDeclaredMethod("length")!!
+        val lengthMethod = stringPClass.getMethod("length")!!
 
         assertEquals("length", lengthMethod.name)
         assertEquals(0, lengthMethod.parameterTypes.size)
@@ -32,7 +32,7 @@ class JvmPMethodTest {
     @Test
     fun `JvmPMethod can invoke no-parameter method`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
-        val lengthMethod = stringPClass.getDeclaredMethod("length")!!
+        val lengthMethod = stringPClass.getMethod("length")!!
 
         val testString = "hello"
         val result = lengthMethod.invoke(testString)
@@ -44,7 +44,7 @@ class JvmPMethodTest {
     fun `JvmPMethod can invoke method with parameters`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = Portrait.intClass()
-        val charAtMethod = stringPClass.getDeclaredMethod("charAt", intPClass)!!
+        val charAtMethod = stringPClass.getMethod("charAt", intPClass)!!
 
         val testString = "hello"
         val result = charAtMethod.invoke(testString, 1)
@@ -55,7 +55,7 @@ class JvmPMethodTest {
     @Test
     fun `JvmPMethod can invoke static methods`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
-        val valueOfMethod = stringPClass.getDeclaredMethod("valueOf", provider.forName<Int>("java.lang.Integer")!!)
+        val valueOfMethod = stringPClass.getMethod("valueOf", provider.forName<Int>("java.lang.Integer")!!)
 
         if (valueOfMethod != null) {
             assertTrue(valueOfMethod.isStatic)
@@ -68,7 +68,7 @@ class JvmPMethodTest {
     fun `JvmPMethod parameter type checking`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = Portrait.intClass()
-        val charAtMethod = stringPClass.getDeclaredMethod("charAt", intPClass)!!
+        val charAtMethod = stringPClass.getMethod("charAt", intPClass)!!
 
         assertTrue(charAtMethod.isCallableWith(intPClass))
         assertFalse(charAtMethod.isCallableWith(stringPClass))
@@ -79,7 +79,7 @@ class JvmPMethodTest {
     fun `JvmPMethod handles method with multiple parameters`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = provider.forName<Int>("java.lang.Integer")!!
-        val substringMethod = stringPClass.getDeclaredMethod("substring", intPClass, intPClass)
+        val substringMethod = stringPClass.getMethod("substring", intPClass, intPClass)
 
         if (substringMethod != null) {
             assertEquals(2, substringMethod.parameterTypes.size)
@@ -95,7 +95,7 @@ class JvmPMethodTest {
     fun `JvmPMethod handles exceptions from invoked methods`() {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = Portrait.intClass()
-        val charAtMethod = stringPClass.getDeclaredMethod("charAt", intPClass)!!
+        val charAtMethod = stringPClass.getMethod("charAt", intPClass)!!
 
         val testString = "hello"
 
@@ -108,15 +108,17 @@ class JvmPMethodTest {
     @Test
     fun `JvmPMethod can access method annotations`() {
         val testClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedMethod = testClassPClass.getDeclaredMethod("annotatedMethod")
+        val annotatedMethod = testClassPClass.getMethod("annotatedMethod")
 
         if (annotatedMethod != null) {
             val annotations = annotatedMethod.annotations
             assertNotNull(annotations)
 
             val testAnnotationClass = provider.forName<TestAnnotation>("tech.kaffa.portrait.jvm.TestAnnotation")!!
-            val hasAnnotation = annotatedMethod.hasAnnotation(testAnnotationClass)
-            // This depends on the test fixtures having the annotation
+            assertTrue(
+                annotatedMethod.hasAnnotation(testAnnotationClass),
+                "annotatedMethod should be annotated with TestAnnotation in fixtures"
+            )
         }
     }
 
@@ -125,8 +127,8 @@ class JvmPMethodTest {
         val stringPClass = provider.forName<String>("java.lang.String")!!
         val intPClass = Portrait.intClass()
 
-        val substringOneParam = stringPClass.getDeclaredMethod("substring", intPClass)
-        val substringTwoParam = stringPClass.getDeclaredMethod("substring", intPClass, intPClass)
+        val substringOneParam = stringPClass.getMethod("substring", intPClass)
+        val substringTwoParam = stringPClass.getMethod("substring", intPClass, intPClass)
 
         assertNotNull(substringOneParam)
         assertNotNull(substringTwoParam)
@@ -141,14 +143,14 @@ class JvmPMethodTest {
         // Find a method that returns void
         val testClassPClass = provider.forName<TestClass>("tech.kaffa.portrait.jvm.TestClass")!!
         val setterMethod =
-            testClassPClass.getDeclaredMethod("setInternalValue", provider.forName<String>("java.lang.String")!!)
+            testClassPClass.getMethod("setInternalValue", provider.forName<String>("java.lang.String")!!)
 
         if (setterMethod != null) {
             val returnType = setterMethod.returnType
             assertEquals("void", returnType.simpleName)
 
             val testInstance = TestClass("initial")
-            val result = setterMethod.invoke(testInstance, "updated")
+            setterMethod.invoke(testInstance, "updated")
             // Void methods return null/Unit
             testInstance.getInternalValue() // Verify the setter worked
         }
@@ -157,7 +159,7 @@ class JvmPMethodTest {
     @Test
     fun `JvmPMethod handles generic return types`() {
         val listPClass = provider.forName<List<*>>("java.util.List")!!
-        val getMethods = listPClass.declaredMethods.filter { it.name == "get" }
+        val getMethods = listPClass.methods.filter { it.name == "get" }
 
         if (getMethods.isNotEmpty()) {
             val getMethod = getMethods.first()

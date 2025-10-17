@@ -13,7 +13,7 @@ class JvmPFieldTest {
     fun `JvmPField basic properties`() {
         // Use a simple class with known fields
         val testClassPClass = provider.forName<TestClass>("tech.kaffa.portrait.jvm.TestClass")!!
-        val fields = testClassPClass.declaredFields
+        val fields = testClassPClass.fields
 
         if (fields.isNotEmpty()) {
             val field = fields.first()
@@ -26,7 +26,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField can get and set field values`() {
         val testClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedField = testClassPClass.getDeclaredField("annotatedField")
+        val annotatedField = testClassPClass.getField("annotatedField")
 
         if (annotatedField != null) {
             val instance = AnnotatedTestClass()
@@ -46,7 +46,7 @@ class JvmPFieldTest {
     fun `JvmPField handles static fields`() {
         val testClassPClass = provider.forName<TestClass>("tech.kaffa.portrait.jvm.TestClass")!!
         // Look for static fields in companion object or constants
-        val fields = testClassPClass.declaredFields
+        val fields = testClassPClass.fields
 
         val staticFields = fields.filter { it.isStatic }
         // Test that static fields can be accessed without instance
@@ -63,7 +63,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField handles primitive field types`() {
         val testClassPClass = provider.forName<TestDataClass>("tech.kaffa.portrait.jvm.TestDataClass")!!
-        val idField = testClassPClass.getDeclaredField("id")
+        val idField = testClassPClass.getField("id")
 
         if (idField != null) {
             assertNotNull(idField.type)
@@ -78,7 +78,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField handles object field types`() {
         val testClassPClass = provider.forName<TestDataClass>("tech.kaffa.portrait.jvm.TestDataClass")!!
-        val nameField = testClassPClass.getDeclaredField("name")
+        val nameField = testClassPClass.getField("name")
 
         if (nameField != null) {
             assertNotNull(nameField.type)
@@ -93,7 +93,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField visibility modifiers`() {
         val testClassPClass = provider.forName<TestClass>("tech.kaffa.portrait.jvm.TestClass")!!
-        val fields = testClassPClass.declaredFields
+        val fields = testClassPClass.fields
 
         // Check that fields have correct visibility flags
         for (field in fields) {
@@ -105,7 +105,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField final modifier`() {
         val testClassPClass = provider.forName<TestDataClass>("tech.kaffa.portrait.jvm.TestDataClass")!!
-        val fields = testClassPClass.declaredFields
+        val fields = testClassPClass.fields
 
         // Data class fields should typically be final (val)
         val finalFields = fields.filter { it.isFinal }
@@ -115,22 +115,24 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField can access field annotations`() {
         val testClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedField = testClassPClass.getDeclaredField("annotatedField")
+        val annotatedField = testClassPClass.getField("annotatedField")
 
         if (annotatedField != null) {
             val annotations = annotatedField.annotations
             assertNotNull(annotations)
 
             val testAnnotationClass = provider.forName<TestAnnotation>("tech.kaffa.portrait.jvm.TestAnnotation")!!
-            val hasAnnotation = annotatedField.hasAnnotation(testAnnotationClass)
-            // This depends on the test fixtures having the annotation
+            assertTrue(
+                annotatedField.hasAnnotation(testAnnotationClass),
+                "annotatedField should carry TestAnnotation in fixtures"
+            )
         }
     }
 
     @Test
     fun `JvmPField handles null values correctly`() {
         val testClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedField = testClassPClass.getDeclaredField("annotatedField")
+        val annotatedField = testClassPClass.getField("annotatedField")
 
         if (annotatedField != null && !annotatedField.type.isPrimitive) {
             val instance = AnnotatedTestClass()
@@ -160,7 +162,7 @@ class JvmPFieldTest {
     @Test
     fun `JvmPField type compatibility`() {
         val testClassPClass = provider.forName<AnnotatedTestClass>("tech.kaffa.portrait.jvm.AnnotatedTestClass")!!
-        val annotatedField = testClassPClass.getDeclaredField("annotatedField")
+        val annotatedField = testClassPClass.getField("annotatedField")
 
         if (annotatedField != null) {
             val fieldType = annotatedField.type

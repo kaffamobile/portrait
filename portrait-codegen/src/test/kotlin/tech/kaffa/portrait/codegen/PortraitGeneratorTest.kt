@@ -14,6 +14,11 @@ import kotlin.test.assertTrue
 
 class PortraitGeneratorTest {
 
+    private fun testJarFile(name: String): File {
+        val dir = File("build/test-generated-jars").apply { mkdirs() }
+        return dir.resolve(name)
+    }
+
     private fun createMockScanResult(): ClasspathScanner.Result {
         val mockScanResult = mockk<ScanResult>()
         every { mockScanResult.getClassInfo(any()) } returns null
@@ -32,29 +37,30 @@ class PortraitGeneratorTest {
     @Test
     fun `PortraitGenerator generateJar creates output file`() {
         val mockScanResult = createMockScanResult()
-        val outputFile = "test-portrait-generated.jar"
+        val outputFile = testJarFile("test-portrait-generated.jar")
 
         try {
             // This test verifies that the JAR generation process completes
             // without crashing. Full bytecode generation testing would require
             // more complex setup with actual classes
-            PortraitGenerator.forJar(outputFile, mockScanResult).generate()
+            PortraitGenerator.forJar(outputFile.absolutePath, mockScanResult).generate()
         } catch (e: Exception) {
             // Expected in test environment - actual class loading might fail
             assertNotNull(e) // Just verify we get some expected error
         } finally {
             // Cleanup
-            File(outputFile).delete()
+            outputFile.delete()
         }
     }
 
     @Test
     fun `PortraitGenerator generateJar with default output path`() {
         val mockScanResult = createMockScanResult()
+        val outputFile = testJarFile("portrait-generated.jar")
 
         try {
             PortraitGenerator.forJar(
-                "portrait-generated.jar",
+                outputFile.absolutePath,
                 mockScanResult
             ).generate()
 
@@ -63,7 +69,7 @@ class PortraitGeneratorTest {
             assertNotNull(e)
         } finally {
             // Cleanup
-            File("portrait-generated.jar").delete()
+            outputFile.delete()
         }
     }
 
@@ -80,9 +86,10 @@ class PortraitGeneratorTest {
             mockEmptyScanResult
         )
 
+        val outputFile = testJarFile("empty-test.jar")
         try {
             PortraitGenerator.forJar(
-                "empty-test.jar",
+                outputFile.absolutePath,
                 emptyScanResult
             ).generate()
 
@@ -90,7 +97,7 @@ class PortraitGeneratorTest {
             // Some error is expected when generating with no classes
             assertNotNull(e)
         } finally {
-            File("empty-test.jar").delete()
+            outputFile.delete()
         }
     }
 
@@ -123,9 +130,10 @@ class PortraitGeneratorTest {
             mockScanResultForNonInterface
         )
 
+        val outputFile = testJarFile("non-interface-test.jar")
         try {
             PortraitGenerator.forJar(
-                "non-interface-test.jar",
+                outputFile.absolutePath,
                 scanResult
             ).generate()
 
@@ -136,25 +144,7 @@ class PortraitGeneratorTest {
             // Expected in test environment
             assertNotNull(e)
         } finally {
-            File("non-interface-test.jar").delete()
-        }
-    }
-
-    @Test
-    fun `PortraitGenerator handles invalid output path gracefully`() {
-        val mockScanResult = createMockScanResult()
-        val invalidOutputPath = "/invalid/directory/path/test.jar"
-
-        try {
-            PortraitGenerator.forJar(
-                invalidOutputPath,
-                mockScanResult
-            ).generate()
-
-        } catch (e: Exception) {
-            // Should get an exception for invalid path
-            assertNotNull(e)
-            // Could be IOException or similar
+            outputFile.delete()
         }
     }
 

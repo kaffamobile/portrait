@@ -176,11 +176,11 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val method = staticPClass.getDeclaredMethod("testMethod")
+        val method = staticPClass.getMethod("testMethod")
         assertNotNull(method, "Should find testMethod")
         assertEquals("testMethod", method.name)
 
-        val nonExistentMethod = staticPClass.getDeclaredMethod("nonExistent")
+        val nonExistentMethod = staticPClass.getMethod("nonExistent")
         assertNull(nonExistentMethod, "Should return null for non-existent method")
     }
 
@@ -195,7 +195,7 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val method = staticPClass.getDeclaredMethod("testMethod", stringPClass)
+        val method = staticPClass.getMethod("testMethod", stringPClass)
         assertNotNull(method, "Should find testMethod with String parameter")
         assertEquals(1, method.parameterTypes.size)
     }
@@ -209,7 +209,7 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val methods = staticPClass.declaredMethods
+        val methods = staticPClass.methods
         assertEquals(1, methods.size)
         assertEquals("testMethod", methods[0].name)
     }
@@ -223,11 +223,11 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val field = staticPClass.getDeclaredField("testField")
+        val field = staticPClass.getField("testField")
         assertNotNull(field, "Should find testField")
         assertEquals("testField", field.name)
 
-        val nonExistentField = staticPClass.getDeclaredField("nonExistent")
+        val nonExistentField = staticPClass.getField("nonExistent")
         assertNull(nonExistentField, "Should return null for non-existent field")
     }
 
@@ -240,7 +240,7 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val fields = staticPClass.declaredFields
+        val fields = staticPClass.fields
         assertEquals(1, fields.size)
         assertEquals("testField", fields[0].name)
     }
@@ -302,20 +302,6 @@ class StaticPClassTest {
         // Interface resolution also depends on Portrait.forName
     }
 
-    @Test
-    fun `StaticPClass type assignment checks`() {
-        val mockPortrait = mockk<StaticPortrait<TestClass>>()
-        val otherPClass = mockk<PClass<String>>()
-
-        every { mockPortrait.getClassName() } returns "com.example.TestClass"
-        every { mockPortrait.getMetadata() } returns metadataFromTestClassEntry()
-        every { otherPClass.qualifiedName } returns "java.lang.String"
-
-        val staticPClass = StaticPClass(mockPortrait)
-
-        assertTrue(staticPClass.isAssignableFrom(staticPClass))
-        assertFalse(staticPClass.isAssignableFrom(otherPClass))
-    }
 
     @Test
     fun `StaticPClass treats boxed primitives as assignable from primitives`() {

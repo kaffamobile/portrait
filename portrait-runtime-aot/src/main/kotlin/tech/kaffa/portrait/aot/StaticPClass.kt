@@ -29,7 +29,7 @@ class StaticPClass<T : Any>(
     }
 
     override val simpleName: String get() = classEntry.simpleName
-    override val qualifiedName: String? get() = classEntry.qualifiedName
+    override val qualifiedName: String get() = classEntry.qualifiedName
     override val isAbstract: Boolean get() = classEntry.isAbstract
     override val isSealed: Boolean get() = classEntry.isSealed
     override val isData: Boolean get() = classEntry.isData
@@ -59,45 +59,51 @@ class StaticPClass<T : Any>(
     }
 
     override fun createInstance(vararg args: Any?): T {
-        // Find the constructor that matches the arguments
-        val constructor = constructors.find { constructor ->
-            constructor.parameterTypes.size == args.size &&
-                    constructor.parameterTypes.zip(args.toList()).all { (paramType, arg) ->
-                        arg == null || (paramType.qualifiedName == arg::class.qualifiedName)
-                    }
-        } ?: throw IllegalArgumentException("No matching constructor found for arguments: ${args.contentToString()}")
+        // Find the constructor that matches the arguments using Portrait's
+        // assignability (handles boxing, subtyping, arrays). Accept null for
+        // reference types and reject for primitive parameters.
+        val ctor = constructors.find { ctor ->
+            if (ctor.parameterTypes.size != args.size) return@find false
+            ctor.parameterTypes.zip(args.asList()).all { (paramType, arg) ->
+                if (arg == null) {
+                    !paramType.isPrimitive
+                } else {
+                    val argType = Portrait.from(arg)
+                    paramType.isAssignableFrom(argType)
+                }
+            }
+        } ?: throw IllegalArgumentException(
+            "No matching constructor found for arguments: ${args.contentToString()}"
+        )
 
-        return constructor.call(*args)
+        return ctor.call(*args)
     }
 
     override fun isAssignableFrom(other: PClass<*>): Boolean {
         val thisQualifiedName = qualifiedName
-        if (thisQualifiedName == other.qualifiedName) {
-            return true
-        }
+        if (thisQualifiedName == other.qualifiedName) return true
 
-        val wrapperPrimitive = thisQualifiedName?.let { BoxedPrimitives.unboxing[it] }
-        if (wrapperPrimitive != null && other.isPrimitive && other.qualifiedName == wrapperPrimitive) {
-            return true
-        }
+        // Primitive boxing bridge: wrapper assignable from primitive
+        val wrapperPrimitive = BoxedPrimitives.unboxing[thisQualifiedName]
+        if (wrapperPrimitive != null && other.isPrimitive && other.qualifiedName == wrapperPrimitive) return true
 
-        return other.qualifiedName in classEntry.interfaceNames ||
-                other.qualifiedName == classEntry.superclassName
+        // General case: if 'other' is a subclass/implements this
+        return other.isSubclassOf(this)
     }
 
     override fun isSubclassOf(other: PClass<*>): Boolean {
-        val otherName = other.qualifiedName ?: return false
+        val otherName = other.qualifiedName
         if (qualifiedName == otherName) return false
 
+        // Walk superclass chain
         var current: PClass<*>? = superclass
         while (current != null) {
-            if (current.qualifiedName == otherName) {
-                return true
-            }
+            if (current.qualifiedName == otherName) return true
             current = current.superclass
         }
 
-        return interfaces.any { it.qualifiedName == otherName }
+        // Check interfaces (including their super-interfaces)
+        return interfaces.any { it.qualifiedName == otherName || it.isSubclassOf(other) }
     }
 
     override val annotations: List<PAnnotation> by lazy {
@@ -125,14 +131,14 @@ class StaticPClass<T : Any>(
                         }
         }
 
-    override val declaredMethods: List<PMethod> by lazy {
+    override val methods: List<PMethod> by lazy {
         classEntry.declaredMethods.withIndex().map { (i, methodEntry) ->
             StaticPMethod(methodEntry, i, staticPortrait)
         }
     }
 
-    override fun getDeclaredMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? {
-        val methodsWithName = declaredMethods.filter { it.name == name }
+    override fun getMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? {
+        val methodsWithName = methods.filter { it.name == name }
 
         return when {
             parameterTypes.isEmpty() -> {
@@ -153,14 +159,14 @@ class StaticPClass<T : Any>(
         }
     }
 
-    override val declaredFields: List<PField> by lazy {
+    override val fields: List<PField> by lazy {
         classEntry.declaredFields.withIndex().map { (i, fieldEntry) ->
             StaticPField(fieldEntry, i, staticPortrait)
         }
     }
 
-    override fun getDeclaredField(name: String): PField? =
-        declaredFields.find { it.name == name }
+    override fun getField(name: String): PField? =
+        fields.find { it.name == name }
 
     override fun createProxy(handler: ProxyHandler<T>): T {
         return staticPortrait.createProxy(this, handler)

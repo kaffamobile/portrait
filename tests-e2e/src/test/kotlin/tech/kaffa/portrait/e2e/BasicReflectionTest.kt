@@ -51,7 +51,7 @@ class BasicReflectionTest {
         val instance = SimpleReflectiveClass("World", 10)
         val pClass = Portrait.from(instance)
 
-        val greetMethod = pClass.getDeclaredMethod("greet")
+        val greetMethod = pClass.getMethod("greet")
         assertNotNull(greetMethod)
 
         val result = greetMethod?.invoke(instance) as String
@@ -63,7 +63,7 @@ class BasicReflectionTest {
         val instance = SimpleReflectiveClass("Test", 5)
         val pClass = Portrait.from(instance)
 
-        val calculateMethod = pClass.getDeclaredMethod("calculate", Int::class.java.portrait)
+        val calculateMethod = pClass.getMethod("calculate", Int::class.java.portrait)
         assertNotNull(calculateMethod)
 
         val result = calculateMethod?.invoke(instance, 3) as Int
@@ -75,7 +75,7 @@ class BasicReflectionTest {
         val instance = FieldTestClass()
         val pClass = Portrait.from(instance)
 
-        val publicField = pClass.getDeclaredField("publicField")
+        val publicField = pClass.getField("publicField")
         assertNotNull(publicField)
 
         val value = publicField!!.get(instance) as String
@@ -155,8 +155,8 @@ class BasicReflectionTest {
         val pClass = Portrait.of(ServiceClass::class.java)
         val instance = pClass.createInstance()
 
-        val incrementMethod = pClass.getDeclaredMethod("increment")
-        val getStateMethod = pClass.getDeclaredMethod("getState")
+        val incrementMethod = pClass.getMethod("increment")
+        val getStateMethod = pClass.getMethod("getState")
 
         assertNotNull(incrementMethod)
         assertNotNull(getStateMethod)

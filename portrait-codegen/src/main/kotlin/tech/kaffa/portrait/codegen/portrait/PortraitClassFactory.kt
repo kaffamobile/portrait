@@ -177,7 +177,7 @@ class PortraitClassFactory(
     ): PClassEntry {
         return PClassEntry(
             simpleName = typeDescription.simpleName,
-            qualifiedName = typeDescription.typeName.takeIf { it.contains(".") },
+            qualifiedName = typeDescription.typeName,
             isAbstract = typeDescription.isAbstract,
             isSealed = kotlinMetadata?.modality == Modality.SEALED,
             isData = kotlinMetadata?.isData ?: false,

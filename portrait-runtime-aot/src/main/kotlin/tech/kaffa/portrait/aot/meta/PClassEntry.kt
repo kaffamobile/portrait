@@ -2,7 +2,7 @@ package tech.kaffa.portrait.aot.meta
 
 data class PClassEntry(
     val simpleName: String,
-    val qualifiedName: String?,
+    val qualifiedName: String,
     val isAbstract: Boolean,
     val isSealed: Boolean,
     val isData: Boolean,
