@@ -6,5 +6,7 @@ include(
     ":portrait-runtime-jvm",
     ":portrait-runtime-aot",
     ":portrait-codegen",
-    ":tests-e2e"
+    ":tests",
+    ":tests:jvm",
+    ":tests:aot"
 )

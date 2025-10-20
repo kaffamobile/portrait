@@ -95,6 +95,13 @@ class PortraitClassFactory(
             )
         }
 
+        // Add Kotlin enum support
+        if (superType.isEnum) {
+            builder = builder
+                .defineMethod("getEnumConstants", Array<Any>::class.java, Visibility.PUBLIC)
+                .intercept(EnumConstantsMethodImpl(superType))
+        }
+
         // Add constructor support (skip for abstract/interface classes)
         if (constructors.isNotEmpty() && !superType.isAbstract && !superType.isInterface) {
             builder = builder
@@ -183,6 +190,7 @@ class PortraitClassFactory(
             isData = kotlinMetadata?.isData ?: false,
             isCompanion = kotlinMetadata?.kind == ClassKind.COMPANION_OBJECT,
             isObject = kotlinMetadata?.kind == ClassKind.OBJECT,
+            isEnum = typeDescription.isEnum,
             javaClassName = typeDescription.typeName,
             superclassName = typeDescription.superclassNameOrNull(),
             interfaceNames = typeDescription.interfaceNames(),

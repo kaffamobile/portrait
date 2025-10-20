@@ -15,8 +15,6 @@ Replace with a run of `portrait-codegen` with a @OptInPortrait
 
 Add in JVM a flag to lock down reflection to work exactly like AoT.
 
-### Post v1.0: Reflections/ClassGraph-like support
-
 ### Post v1.0: Plugins
 
 Create Maven and Gradle Plugin for portrait-codegen

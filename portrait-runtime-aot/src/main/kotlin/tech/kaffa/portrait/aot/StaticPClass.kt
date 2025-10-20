@@ -34,6 +34,18 @@ class StaticPClass<T : Any>(
     override val isSealed: Boolean get() = classEntry.isSealed
     override val isData: Boolean get() = classEntry.isData
     override val isCompanion: Boolean get() = classEntry.isCompanion
+    override val isEnum: Boolean get() = classEntry.isEnum
+    override val enumConstants: Array<T>?
+        get() =
+            if (classEntry.isEnum) {
+                try {
+                    staticPortrait.enumConstants
+                } catch (e: UnsupportedOperationException) {
+                    null
+                }
+            } else {
+                null
+            }
 
     override val objectInstance: T?
         get() =

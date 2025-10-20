@@ -280,19 +280,23 @@ private class TestablePClass<T : Any>(
     private val isSealedFlag: Boolean = false,
     private val isDataFlag: Boolean = false,
     private val isCompanionFlag: Boolean = false,
+    private val isEnumFlag: Boolean = false,
     override val constructors: List<PConstructor<T>> = emptyList(),
     override val methods: List<PMethod> = emptyList(),
     override val fields: List<PField> = emptyList(),
     override val annotations: List<PAnnotation> = emptyList(),
     override val superclass: PClass<*>? = null,
     override val interfaces: List<PClass<*>> = emptyList(),
-    override val objectInstance: T? = null
+    override val objectInstance: T? = null,
+    private val enumConstantValues: Array<T>? = null
 ) : PClass<T>() {
     override val simpleName: String = qualifiedName.substringAfterLast('.')
     override val isAbstract: Boolean = isAbstractFlag
     override val isSealed: Boolean = isSealedFlag
     override val isData: Boolean = isDataFlag
     override val isCompanion: Boolean = isCompanionFlag
+    override val isEnum: Boolean = isEnumFlag
+    override val enumConstants: Array<T>? = enumConstantValues
 
     override fun createProxy(handler: ProxyHandler<T>): T {
         throw UnsupportedOperationException("Proxy creation not supported for test stubs")

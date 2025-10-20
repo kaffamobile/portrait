@@ -29,7 +29,9 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
     override val isSealed: Boolean = false
     override val isData: Boolean = false
     override val isCompanion: Boolean = false
+    override val isEnum: Boolean = false
     override val objectInstance: T? = null
+    override val enumConstants: Array<T>? = null
     override val superclass: PClass<*> by lazy {
         Portrait.forNameOrUnresolved(OBJECT_CLASS_NAME)
     }

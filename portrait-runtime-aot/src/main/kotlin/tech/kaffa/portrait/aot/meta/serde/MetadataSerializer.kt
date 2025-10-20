@@ -232,7 +232,7 @@ class MetadataSerializer {
 
     companion object {
         const val MAGIC_NUMBER = 0x504D4144 // "PMAD" - Portrait Metadata
-        const val VERSION = 2
+        const val VERSION = 3
 
         // Type constants for annotation values
         const val TYPE_NULL = 0

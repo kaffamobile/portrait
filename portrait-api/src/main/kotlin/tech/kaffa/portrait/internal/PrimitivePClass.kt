@@ -19,7 +19,9 @@ internal class PrimitivePClass<T : Any>(primitiveTypeName: String) : PClass<T>()
     override val isSealed: Boolean = false
     override val isData: Boolean = false
     override val isCompanion: Boolean = false
+    override val isEnum: Boolean = false
     override val objectInstance: T? = null
+    override val enumConstants: Array<T>? = null
     override val superclass: PClass<*>? = null
     override val interfaces: List<PClass<*>> = emptyList()
     override val isPrimitive = true

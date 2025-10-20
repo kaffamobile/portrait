@@ -72,7 +72,14 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
         if (!method.isAccessible) {
             method.isAccessible = true
         }
-        return method.invoke(instance, *args)
+        return try {
+            method.invoke(instance, *args)
+        } catch (exception: java.lang.reflect.InvocationTargetException) {
+            val cause = exception.cause ?: exception
+            if (cause is RuntimeException) throw cause
+            if (cause is Error) throw cause
+            throw cause
+        }
     }
 
     override val annotations: List<PAnnotation> =

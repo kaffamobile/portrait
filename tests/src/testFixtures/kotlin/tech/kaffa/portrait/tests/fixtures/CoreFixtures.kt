@@ -1,22 +1,16 @@
 @file:Suppress("unused", "UNUSED_PARAMETER")
 
-package tech.kaffa.portrait.jvm
+package tech.kaffa.portrait.tests.fixtures
 
-import tech.kaffa.portrait.PClass
+import tech.kaffa.portrait.Includes
 import tech.kaffa.portrait.ProxyTarget
 import tech.kaffa.portrait.Reflective
-
-/**
- * Common test fixtures and sample classes used across Portrait tests.
- */
 
 @Reflective
 @ProxyTarget
 data class TestDataClass(
-    @JvmField
-    val id: Int,
-    @JvmField
-    val name: String,
+    @JvmField val id: Int,
+    @JvmField val name: String,
     val active: Boolean = true
 ) {
     fun updateName(newName: String): TestDataClass = copy(name = newName)
@@ -105,13 +99,10 @@ class AnnotatedTestClass {
     fun annotatedMethod(): String = "annotated"
 }
 
-@TestAnnotation  // Using defaults: value="default", number=42, flag=false
+@TestAnnotation
 @Reflective
 class SimpleAnnotatedClass
 
-/**
- * Test cases for various parameter types and edge cases
- */
 @Reflective
 class ParameterTestClass {
 
@@ -142,12 +133,8 @@ class ParameterTestClass {
     fun <T> genericMethod(value: T): T = value
 }
 
-/**
- * Exception test cases
- */
 @Reflective
 class ExceptionTestClass {
-
     fun throwsException(): String {
         throw RuntimeException("Test exception")
     }
@@ -157,11 +144,7 @@ class ExceptionTestClass {
     }
 }
 
-/**
- * Utility object for test assertions and common operations
- */
 object TestUtils {
-
     fun createTestDataClass(id: Int = 1, name: String = "test"): TestDataClass {
         return TestDataClass(id, name)
     }
@@ -169,13 +152,142 @@ object TestUtils {
     fun createTestClass(value: String = "test"): TestClass {
         return TestClass(value)
     }
+}
 
-    inline fun <reified T> assertType(value: Any): T {
-        require(value is T) { "Expected ${T::class.simpleName}, got ${value::class.simpleName}" }
-        return value
+@Reflective(including = [Includes.PUBLIC_API])
+data class SimpleReflectiveClass(
+    val name: String,
+    val value: Int
+) {
+    fun greet(): String = "Hello, $name!"
+    fun calculate(multiplier: Int): Int = value * multiplier
+
+    companion object {
+        const val DEFAULT_VALUE = 42
+
+        fun create(name: String): SimpleReflectiveClass {
+            return SimpleReflectiveClass(name, DEFAULT_VALUE)
+        }
+    }
+}
+
+@Reflective(including = [Includes.ALL_SUBTYPES])
+sealed class Operation {
+    abstract fun execute(): Int
+}
+
+@Reflective
+data class Addition(val a: Int, val b: Int) : Operation() {
+    override fun execute(): Int = a + b
+}
+
+@Reflective
+data class Multiplication(val a: Int, val b: Int) : Operation() {
+    override fun execute(): Int = a * b
+}
+
+@ProxyTarget
+interface Calculator {
+    fun add(a: Int, b: Int): Int
+    fun multiply(a: Int, b: Int): Int
+}
+
+@Reflective
+class ServiceClass {
+    private var state: Int = 0
+
+    fun increment(): Int {
+        state++
+        return state
     }
 
-    fun assertPortraitNotNull(portrait: PClass<*>?) {
-        requireNotNull(portrait) { "Portrait should not be null" }
+    fun reset() {
+        state = 0
+    }
+
+    fun getState(): Int = state
+
+    fun processString(input: String): String = input.uppercase()
+
+    fun processVarargs(vararg numbers: Int): Int = numbers.sum()
+}
+
+@Reflective
+object SingletonService {
+    private var counter: Int = 0
+
+    fun incrementCounter(): Int {
+        counter++
+        return counter
+    }
+
+    fun getCounter(): Int = counter
+}
+
+@Reflective
+enum class Status {
+    PENDING,
+    ACTIVE,
+    COMPLETED,
+    FAILED;
+
+    fun isTerminal(): Boolean = this == COMPLETED || this == FAILED
+}
+
+@Reflective
+class FieldTestClass {
+    @JvmField
+    var publicField: String = "public"
+    private var privateField: Int = 42
+    val readOnlyField: Double = 3.14
+
+    fun getPrivateField(): Int = privateField
+
+    fun setPrivateField(value: Int) {
+        privateField = value
+    }
+}
+
+@Reflective(including = [Includes.PUBLIC_API])
+class MultiConstructorClass {
+    val name: String
+    val value: Int
+    val optional: String?
+
+    constructor(name: String) {
+        this.name = name
+        this.value = 0
+        this.optional = null
+    }
+
+    constructor(name: String, value: Int) {
+        this.name = name
+        this.value = value
+        this.optional = null
+    }
+
+    constructor(name: String, value: Int, optional: String) {
+        this.name = name
+        this.value = value
+        this.optional = optional
+    }
+}
+
+@Reflective
+data class Container<T>(val content: T) {
+    fun get(): T = content
+
+    fun transform(transformer: (T) -> T): Container<T> {
+        return Container(transformer(content))
+    }
+}
+
+@Reflective
+data class NullableTestClass(
+    val required: String,
+    val optional: String?
+) {
+    fun getOptionalOrDefault(default: String): String {
+        return optional ?: default
     }
 }

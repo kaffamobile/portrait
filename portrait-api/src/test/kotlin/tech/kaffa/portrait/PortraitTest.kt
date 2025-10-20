@@ -86,17 +86,4 @@ class PortraitTest {
             Portrait.of(TestClass::class.java)
         }
     }
-
-    @Test
-    fun `Portrait from rejects anonymous and local classes`() {
-        val anonymous = object : Runnable {
-            override fun run() = Unit
-        }
-
-        val error = assertFailsWith<IllegalArgumentException> {
-            Portrait.from(anonymous)
-        }
-
-        assertTrue(error.message!!.contains("Local and anonymous classes are unsupported"))
-    }
 }

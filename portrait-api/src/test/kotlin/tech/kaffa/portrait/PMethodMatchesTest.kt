@@ -114,7 +114,9 @@ class PMethodMatchesTest {
             override val isSealed: Boolean = false
             override val isData: Boolean = false
             override val isCompanion: Boolean = false
+            override val isEnum: Boolean = false
             override val objectInstance: Any? = null
+            override val enumConstants: Array<Any>? = null
             override val superclass: PClass<*>? = null
             override val interfaces: List<PClass<*>> = emptyList()
             override val annotations: List<PAnnotation> = emptyList()

@@ -39,6 +39,7 @@ class MetadataSerializationTest {
             isData = true,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = "java.lang.Object",
             interfaceNames = listOf("java.io.Serializable"),
@@ -59,6 +60,7 @@ class MetadataSerializationTest {
         assertEquals(originalEntry.isData, deserialized.isData)
         assertEquals(originalEntry.isCompanion, deserialized.isCompanion)
         assertEquals(originalEntry.isObject, deserialized.isObject)
+        assertEquals(originalEntry.isEnum, deserialized.isEnum)
         assertEquals(originalEntry.javaClassName, deserialized.javaClassName)
         assertEquals(originalEntry.superclassName, deserialized.superclassName)
         assertEquals(originalEntry.interfaceNames, deserialized.interfaceNames)
@@ -93,6 +95,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -143,6 +146,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -190,6 +194,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -237,6 +242,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -272,6 +278,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = true,
+            isEnum = false,
             javaClassName = "com.example.ComplexClass",
             superclassName = "java.lang.Object",
             interfaceNames = listOf("java.io.Serializable", "java.lang.Comparable"),
@@ -334,6 +341,7 @@ class MetadataSerializationTest {
         assertEquals(complexClassEntry.simpleName, deserialized.simpleName)
         assertEquals(complexClassEntry.isSealed, deserialized.isSealed)
         assertEquals(complexClassEntry.isObject, deserialized.isObject)
+        assertEquals(complexClassEntry.isEnum, deserialized.isEnum)
         assertEquals(complexClassEntry.interfaceNames.size, deserialized.interfaceNames.size)
         assertEquals(complexClassEntry.annotations.size, deserialized.annotations.size)
         assertEquals(complexClassEntry.constructors.size, deserialized.constructors.size)

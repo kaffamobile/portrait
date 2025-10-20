@@ -11,7 +11,8 @@ object ClassFlags {
     const val IS_DATA = 1 shl 2
     const val IS_COMPANION = 1 shl 3
     const val IS_OBJECT = 1 shl 4
-    const val HAS_SUPERCLASS = 1 shl 5
+    const val IS_ENUM = 1 shl 5
+    const val HAS_SUPERCLASS = 1 shl 6
 }
 
 object ConstructorFlags {
@@ -48,6 +49,7 @@ fun buildClassFlags(entry: PClassEntry): Int {
     if (entry.isData) flags = flags or ClassFlags.IS_DATA
     if (entry.isCompanion) flags = flags or ClassFlags.IS_COMPANION
     if (entry.isObject) flags = flags or ClassFlags.IS_OBJECT
+    if (entry.isEnum) flags = flags or ClassFlags.IS_ENUM
     if (entry.superclassName != null) flags = flags or ClassFlags.HAS_SUPERCLASS
     return flags
 }

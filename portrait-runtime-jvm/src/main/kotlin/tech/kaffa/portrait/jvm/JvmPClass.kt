@@ -75,46 +75,14 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     override val isSealed: Boolean = kClass.isSealed
     override val isData: Boolean = kClass.isData
     override val isCompanion: Boolean = kClass.isCompanion
+    override val isEnum: Boolean = kClass.java.isEnum
     override val objectInstance: T? = kClass.objectInstance
-
-    override fun createInstance(vararg args: Any?): T {
-        return if (args.isEmpty()) {
-            // No arguments - use default constructor
-            kClass.java.getDeclaredConstructor().newInstance()
+    override val enumConstants: Array<T>? by lazy {
+        if (!isEnum) {
+            null
         } else {
-            // Find constructor that matches the argument types
-            val argTypes = args.map { arg ->
-                when (arg) {
-                    null -> Any::class.java // For null arguments, we'll need more sophisticated matching
-                    else -> arg::class.java
-                }
-            }.toTypedArray()
-
-            // Try to find exact match first
-            val exactConstructor = try {
-                kClass.java.getDeclaredConstructor(*argTypes)
-            } catch (e: NoSuchMethodException) {
-                null
-            }
-
-            if (exactConstructor != null) {
-                exactConstructor.newInstance(*args)
-            } else {
-                // Try to find compatible constructor
-                val compatibleConstructor = kClass.java.declaredConstructors.find { constructor ->
-                    constructor.parameterCount == args.size &&
-                            constructor.parameterTypes.zip(args).all { (paramType, arg) ->
-                                arg == null || paramType.isAssignableFrom(arg::class.java)
-                            }
-                }
-
-                if (compatibleConstructor != null) {
-                    @Suppress("UNCHECKED_CAST")
-                    compatibleConstructor.newInstance(*args) as T
-                } else {
-                    throw IllegalArgumentException("No constructor found for arguments: ${args.map { it?.let { it::class.simpleName } ?: "null" }}")
-                }
-            }
+            @Suppress("UNCHECKED_CAST")
+            kClass.java.enumConstants as Array<T>?
         }
     }
 

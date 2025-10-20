@@ -83,6 +83,7 @@ class MetadataDeserializer {
             isData = (flags and ClassFlags.IS_DATA) != 0,
             isCompanion = (flags and ClassFlags.IS_COMPANION) != 0,
             isObject = (flags and ClassFlags.IS_OBJECT) != 0,
+            isEnum = (flags and ClassFlags.IS_ENUM) != 0,
             javaClassName = javaClassName,
             superclassName = superclassName,
             interfaceNames = interfaceNames,
