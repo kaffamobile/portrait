@@ -5,7 +5,6 @@ import tech.kaffa.portrait.PClass
 import tech.kaffa.portrait.PConstructor
 import tech.kaffa.portrait.Portrait
 import java.lang.reflect.Constructor
-import java.lang.reflect.Modifier
 
 /**
  * JVM implementation of PConstructor using Java reflection.
@@ -58,10 +57,6 @@ internal class JvmPConstructor<T : Any>(private val constructor: Constructor<T>)
 
     override val declaringClass: PClass<T> by lazy { Portrait.of(constructor.declaringClass) }
     override val parameterTypes: List<PClass<*>> by lazy { constructor.parameterTypes.map { Portrait.of(it) } }
-    override val isPublic: Boolean = Modifier.isPublic(constructor.modifiers)
-    override val isPrivate: Boolean = Modifier.isPrivate(constructor.modifiers)
-    override val isProtected: Boolean = Modifier.isProtected(constructor.modifiers)
-
     override val annotations: List<PAnnotation> =
         constructor.annotations.map { JvmPAnnotation(it) }
 

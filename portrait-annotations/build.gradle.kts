@@ -20,7 +20,7 @@ tasks.withType<Test> {
 }
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(11)
 }
 
 publishing {

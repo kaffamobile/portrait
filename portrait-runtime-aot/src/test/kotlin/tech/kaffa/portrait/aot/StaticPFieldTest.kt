@@ -17,9 +17,6 @@ class StaticPFieldTest {
             name = "testField",
             typeName = "java.lang.String",
             declaringClassName = "com.example.TestClass",
-            isPublic = false,
-            isPrivate = true,
-            isProtected = false,
             isStatic = false,
             isFinal = true,
             annotations = listOf(
@@ -41,9 +38,6 @@ class StaticPFieldTest {
         val staticPField = StaticPField(fieldEntry, 0, mockPortrait)
 
         assertEquals("testField", staticPField.name)
-        assertFalse(staticPField.isPublic)
-        assertTrue(staticPField.isPrivate)
-        assertFalse(staticPField.isProtected)
         assertFalse(staticPField.isStatic)
         assertTrue(staticPField.isFinal)
     }
@@ -191,44 +185,6 @@ class StaticPFieldTest {
         val value = staticPField.get(testInstance)
         assertEquals(arrayValue, value)
     }
-
-    @Test
-    fun `StaticPField field visibility modifiers`() {
-        val mockPortrait = mockk<StaticPortrait<TestClass>>()
-
-        val publicField = createTestFieldEntry().copy(
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false
-        )
-        val protectedField = createTestFieldEntry().copy(
-            isPublic = false,
-            isPrivate = false,
-            isProtected = true
-        )
-        val privateField = createTestFieldEntry().copy(
-            isPublic = false,
-            isPrivate = true,
-            isProtected = false
-        )
-
-        val staticPublicField = StaticPField(publicField, -1, mockPortrait)
-        val staticProtectedField = StaticPField(protectedField, -1, mockPortrait)
-        val staticPrivateField = StaticPField(privateField, -1, mockPortrait)
-
-        assertTrue(staticPublicField.isPublic)
-        assertFalse(staticPublicField.isPrivate)
-        assertFalse(staticPublicField.isProtected)
-
-        assertFalse(staticProtectedField.isPublic)
-        assertFalse(staticProtectedField.isPrivate)
-        assertTrue(staticProtectedField.isProtected)
-
-        assertFalse(staticPrivateField.isPublic)
-        assertTrue(staticPrivateField.isPrivate)
-        assertFalse(staticPrivateField.isProtected)
-    }
-
     @Test
     fun `StaticPField final and static modifiers`() {
         val mockPortrait = mockk<StaticPortrait<TestClass>>()

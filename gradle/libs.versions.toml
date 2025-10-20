@@ -7,9 +7,11 @@ classgraph = "4.8.165"
 kotlinx-metadata = "0.7.0"
 mockk = "1.12.5"
 slf4j = "1.7.36"
-logback = "1.2.12"
+logback = "1.5.13"
 teavm = "0.12.3"
 clikt = "4.4.0"
+shadow = "8.3.9"
+asm = "9.8"
 
 [libraries]
 kotlin-stdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
@@ -28,7 +30,13 @@ teavm-junit = { module = "org.teavm:teavm-junit", version.ref = "teavm" }
 teavm-core = { module = "org.teavm:teavm-core", version.ref = "teavm" }
 teavm-classlib = { module = "org.teavm:teavm-classlib", version.ref = "teavm" }
 clikt = { module = "com.github.ajalt.clikt:clikt", version.ref = "clikt" }
+asm = { module = "org.ow2.asm:asm", version.ref = "asm" }
+asm-commons = { module = "org.ow2.asm:asm-commons", version.ref = "asm" }
+asm-util = { module = "org.ow2.asm:asm-util", version.ref = "asm" }
+asm-tree = { module = "org.ow2.asm:asm-tree", version.ref = "asm" }
+asm-analysis = { module = "org.ow2.asm:asm-analysis", version.ref = "asm" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 teavm = { id = "org.teavm", version.ref = "teavm" }
+shadow = { id = "com.gradleup.shadow", version.ref = "shadow" }

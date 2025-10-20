@@ -12,7 +12,6 @@ plugins {
 
 repositories {
     mavenCentral()
-    maven("https://repo.teavm.org/maven2")
 }
 
 kotlin {
@@ -117,10 +116,11 @@ val runPortraitTestsCodegen = tasks.register<JavaExec>("runPortraitTestsCodegen"
     mainClass.set("tech.kaffa.portrait.codegen.cli.PortraitKt")
 
     doFirst {
-        classpath = codegenRuntimeClasspath + files(fixturesClassesDir)
+        classpath = codegenRuntimeClasspath
         args = listOf(
             "--input", fixturesClassesDir.get().asFile.absolutePath,
-            "--output", generatedPortraitDir.get().asFile.absolutePath
+            "--output", generatedPortraitDir.get().asFile.absolutePath,
+            "--runtime=teavm"
         )
     }
 }

@@ -25,9 +25,6 @@ class StaticPField(
         Portrait.forNameOrUnresolved(fieldEntry.declaringClassName)
     }
 
-    override val isPublic: Boolean get() = fieldEntry.isPublic
-    override val isPrivate: Boolean get() = fieldEntry.isPrivate
-    override val isProtected: Boolean get() = fieldEntry.isProtected
     override val isStatic: Boolean get() = fieldEntry.isStatic
     override val isFinal: Boolean get() = fieldEntry.isFinal
 

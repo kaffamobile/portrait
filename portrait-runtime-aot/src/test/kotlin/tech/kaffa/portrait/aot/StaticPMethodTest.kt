@@ -18,9 +18,6 @@ class StaticPMethodTest {
             parameterTypeNames = listOf("java.lang.String", "int"),
             returnTypeName = "java.lang.Object",
             declaringClassName = "com.example.TestClass",
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false,
             isStatic = false,
             isFinal = true,
             isAbstract = false,
@@ -45,9 +42,6 @@ class StaticPMethodTest {
 
         assertEquals("testMethod", staticPMethod.name)
         assertEquals(2, staticPMethod.parameterTypes.size)
-        assertTrue(staticPMethod.isPublic)
-        assertFalse(staticPMethod.isPrivate)
-        assertFalse(staticPMethod.isProtected)
         assertFalse(staticPMethod.isStatic)
         assertTrue(staticPMethod.isFinal)
         assertFalse(staticPMethod.isAbstract)

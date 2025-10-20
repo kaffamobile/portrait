@@ -97,7 +97,7 @@ class MetadataDeserializer {
 
     private fun readConstructor(stream: DataInputStream, stringPool: ReadOnlyStringPool): PConstructorEntry {
         val declaringClassName = stringPool.getString(stream.readInt())
-        val flags = stream.readInt()
+        stream.readInt() // flags reserved for future use
 
         // Parameter types
         val parameterCount = stream.readInt()
@@ -108,10 +108,7 @@ class MetadataDeserializer {
         return PConstructorEntry(
             declaringClassName = declaringClassName,
             parameterTypeNames = parameterTypeNames,
-            annotations = annotations,
-            isPublic = (flags and ConstructorFlags.IS_PUBLIC) != 0,
-            isPrivate = (flags and ConstructorFlags.IS_PRIVATE) != 0,
-            isProtected = (flags and ConstructorFlags.IS_PROTECTED) != 0
+            annotations = annotations
         )
     }
 
@@ -127,9 +124,6 @@ class MetadataDeserializer {
             name = name,
             typeName = typeName,
             declaringClassName = declaringClassName,
-            isPublic = (flags and FieldFlags.IS_PUBLIC) != 0,
-            isPrivate = (flags and FieldFlags.IS_PRIVATE) != 0,
-            isProtected = (flags and FieldFlags.IS_PROTECTED) != 0,
             isStatic = (flags and FieldFlags.IS_STATIC) != 0,
             isFinal = (flags and FieldFlags.IS_FINAL) != 0,
             annotations = annotations
@@ -159,9 +153,6 @@ class MetadataDeserializer {
             parameterTypeNames = parameterTypeNames,
             returnTypeName = returnTypeName,
             declaringClassName = declaringClassName,
-            isPublic = (flags and MethodFlags.IS_PUBLIC) != 0,
-            isPrivate = (flags and MethodFlags.IS_PRIVATE) != 0,
-            isProtected = (flags and MethodFlags.IS_PROTECTED) != 0,
             isStatic = (flags and MethodFlags.IS_STATIC) != 0,
             isFinal = (flags and MethodFlags.IS_FINAL) != 0,
             isAbstract = (flags and MethodFlags.IS_ABSTRACT) != 0,

@@ -126,7 +126,7 @@ class MetadataSerializer {
 
     private fun writeConstructor(data: DataOutputStream, constructor: PConstructorEntry) {
         data.writeInt(stringPool.intern(constructor.declaringClassName))
-        data.writeInt(buildConstructorFlags(constructor))
+        data.writeInt(0)
 
         // Parameter types
         data.writeInt(constructor.parameterTypeNames.size)
@@ -232,7 +232,7 @@ class MetadataSerializer {
 
     companion object {
         const val MAGIC_NUMBER = 0x504D4144 // "PMAD" - Portrait Metadata
-        const val VERSION = 3
+        const val VERSION = 4
 
         // Type constants for annotation values
         const val TYPE_NULL = 0

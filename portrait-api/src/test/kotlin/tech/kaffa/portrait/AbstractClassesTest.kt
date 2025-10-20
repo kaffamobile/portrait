@@ -21,9 +21,6 @@ class AbstractClassesTest {
         every { pMethod.returnType } returns mockk()
         every { pMethod.declaringClass } returns mockk()
         every { pMethod.annotations } returns emptyList()
-        every { pMethod.isPublic } returns true
-        every { pMethod.isPrivate } returns false
-        every { pMethod.isProtected } returns false
         every { pMethod.isStatic } returns false
         every { pMethod.isFinal } returns false
         every { pMethod.isAbstract } returns false
@@ -43,9 +40,6 @@ class AbstractClassesTest {
         every { pField.type } returns mockk()
         every { pField.declaringClass } returns mockk()
         every { pField.annotations } returns emptyList()
-        every { pField.isPublic } returns true
-        every { pField.isPrivate } returns false
-        every { pField.isProtected } returns false
         every { pField.isStatic } returns false
         every { pField.isFinal } returns false
 
@@ -62,9 +56,6 @@ class AbstractClassesTest {
         every { pConstructor.parameterTypes } returns emptyList()
         every { pConstructor.declaringClass } returns mockk()
         every { pConstructor.annotations } returns emptyList()
-        every { pConstructor.isPublic } returns true
-        every { pConstructor.isPrivate } returns false
-        every { pConstructor.isProtected } returns false
 
         assertNotNull(pConstructor.parameterTypes)
         assertNotNull(pConstructor.declaringClass)
@@ -109,9 +100,6 @@ class AbstractClassesTest {
         every { concreteMethod.returnType } returns mockk<PClass<*>>()
         every { concreteMethod.declaringClass } returns mockk<PClass<*>>()
         every { concreteMethod.annotations } returns emptyList<PAnnotation>()
-        every { concreteMethod.isPublic } returns true
-        every { concreteMethod.isPrivate } returns false
-        every { concreteMethod.isProtected } returns false
         every { concreteMethod.isStatic } returns false
         every { concreteMethod.isFinal } returns false
         every { concreteMethod.isAbstract } returns false

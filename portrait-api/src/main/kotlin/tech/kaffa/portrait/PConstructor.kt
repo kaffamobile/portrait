@@ -22,15 +22,6 @@ abstract class PConstructor<T : Any> {
     /** All annotations present on this constructor, empty if none */
     abstract val annotations: List<PAnnotation>
 
-    /** True if this constructor is public */
-    abstract val isPublic: Boolean
-
-    /** True if this constructor is private */
-    abstract val isPrivate: Boolean
-
-    /** True if this constructor is protected */
-    abstract val isProtected: Boolean
-
     /**
      * Gets a specific annotation from this constructor.
      *
@@ -97,11 +88,6 @@ abstract class PConstructor<T : Any> {
         for (parameter in parameterTypes) {
             result = mix(result, parameter.qualifiedName.hashCode())
         }
-
-        val visibility = (if (isPublic) 1 else 0) or
-            (if (isPrivate) 1 shl 1 else 0) or
-            (if (isProtected) 1 shl 2 else 0)
-        result = mix(result, visibility)
 
         result = mix(result, annotations.size)
 

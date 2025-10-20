@@ -23,15 +23,6 @@ abstract class PMethod {
     /** The class that declares this method */
     abstract val declaringClass: PClass<*>
 
-    /** True if this method has public visibility */
-    abstract val isPublic: Boolean
-
-    /** True if this method has private visibility */
-    abstract val isPrivate: Boolean
-
-    /** True if this method has protected visibility */
-    abstract val isProtected: Boolean
-
     /** True if this is a static method */
     abstract val isStatic: Boolean
 
@@ -110,10 +101,7 @@ abstract class PMethod {
         }
         if (!parametersMatch) return false
 
-        val flagsMatch = isPublic == other.isPublic &&
-            isPrivate == other.isPrivate &&
-            isProtected == other.isProtected &&
-            isStatic == other.isStatic &&
+        val flagsMatch = isStatic == other.isStatic &&
             isFinal == other.isFinal &&
             isAbstract == other.isAbstract
         if (!flagsMatch) return false
@@ -136,12 +124,9 @@ abstract class PMethod {
             result = mix(result, parameter.qualifiedName.hashCode())
         }
 
-        val flags = (if (isPublic) 1 else 0) or
-            (if (isPrivate) 1 shl 1 else 0) or
-            (if (isProtected) 1 shl 2 else 0) or
-            (if (isStatic) 1 shl 3 else 0) or
-            (if (isFinal) 1 shl 4 else 0) or
-            (if (isAbstract) 1 shl 5 else 0)
+        val flags = (if (isStatic) 1 else 0) or
+            (if (isFinal) 1 shl 1 else 0) or
+            (if (isAbstract) 1 shl 2 else 0)
         result = mix(result, flags)
 
         result = mix(result, annotations.size)

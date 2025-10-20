@@ -18,7 +18,7 @@ public abstract class StaticPortrait<T> {
     public T getObjectInstance() {
         throw new UnsupportedOperationException("Object instance not available");
     }
-//
+
     public T[] getEnumConstants() {
         throw new UnsupportedOperationException("Class is not an enum.");
     }

@@ -82,9 +82,6 @@ class PMethodMatchesTest {
             override val parameterCount: Int = parameterTypes.size
             override val returnType: PClass<*> = returnType
             override val declaringClass: PClass<*> = declaringType
-            override val isPublic: Boolean = true
-            override val isPrivate: Boolean = false
-            override val isProtected: Boolean = false
             override val isStatic: Boolean = false
             override val isFinal: Boolean = false
             override val isAbstract: Boolean = false

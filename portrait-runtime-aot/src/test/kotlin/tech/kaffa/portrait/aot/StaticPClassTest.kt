@@ -44,10 +44,7 @@ class StaticPClassTest {
                 PConstructorEntry(
                     declaringClassName = "com.example.TestClass",
                     parameterTypeNames = emptyList(),
-                    annotations = emptyList(),
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false
+                    annotations = emptyList()
                 )
             ),
             declaredMethods = listOf(
@@ -56,9 +53,6 @@ class StaticPClassTest {
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
                     declaringClassName = "com.example.TestClass",
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = false,
                     isAbstract = false,
@@ -71,9 +65,6 @@ class StaticPClassTest {
                     name = "testField",
                     typeName = "java.lang.String",
                     declaringClassName = "com.example.TestClass",
-                    isPublic = false,
-                    isPrivate = true,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = true,
                     annotations = emptyList()
@@ -85,9 +76,6 @@ class StaticPClassTest {
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
                     declaringClassName = "com.example.TestClass\$Proxy",
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = false,
                     isAbstract = false,
