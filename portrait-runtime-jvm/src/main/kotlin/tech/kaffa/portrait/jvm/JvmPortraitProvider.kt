@@ -2,6 +2,7 @@ package tech.kaffa.portrait.jvm
 
 import tech.kaffa.portrait.PClass
 import tech.kaffa.portrait.provider.PortraitProvider
+import java.lang.reflect.Modifier
 
 /**
  * JVM-based implementation of PortraitProvider using standard Java reflection.
@@ -37,9 +38,25 @@ class JvmPortraitProvider : PortraitProvider {
     override fun <T : Any> forName(className: String): PClass<T>? {
         return try {
             @Suppress("UNCHECKED_CAST")
-            JvmPClass((Class.forName(className) as Class<T>).kotlin)
+            val javaClass = Class.forName(className) as Class<T>
+            if (!isPubliclyAccessible(javaClass)) {
+                return null
+            }
+            JvmPClass(javaClass.kotlin)
         } catch (e: Exception) {
             null
         }
+    }
+
+    private fun isPubliclyAccessible(clazz: Class<*>): Boolean {
+        if (clazz.canonicalName == null) return false
+        if (!Modifier.isPublic(clazz.modifiers)) return false
+
+        var enclosing: Class<*>? = clazz.enclosingClass
+        while (enclosing != null) {
+            if (!Modifier.isPublic(enclosing.modifiers)) return false
+            enclosing = enclosing.enclosingClass
+        }
+        return true
     }
 }

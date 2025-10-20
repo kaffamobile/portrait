@@ -6,5 +6,8 @@ include(
     ":portrait-runtime-jvm",
     ":portrait-runtime-aot",
     ":portrait-codegen",
-    ":tests-e2e"
+    ":portrait-codegen:teavm-classlib",
+    ":tests",
+    ":tests:runtime-jvm",
+    ":tests:runtime-aot"
 )

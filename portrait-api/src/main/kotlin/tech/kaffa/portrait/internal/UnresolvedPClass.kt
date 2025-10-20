@@ -30,7 +30,9 @@ class UnresolvedPClass<T : Any>(
     override val isSealed: Boolean = false // Unknown, assume false  
     override val isData: Boolean = false // Unknown, assume false
     override val isCompanion: Boolean = false // Unknown, assume false
+    override val isEnum: Boolean = false
     override val objectInstance: T? = null // Unknown, assume null
+    override val enumConstants: Array<T>? = null
     override val superclass: PClass<*>? = null // Unknown, could cause issues but safer than guessing
     override val interfaces: List<PClass<*>> = emptyList() // Unknown, assume none
 

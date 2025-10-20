@@ -24,7 +24,7 @@ class StaticPClass<T : Any>(
     private val staticPortrait: StaticPortrait<T>
 ) : PClass<T>(), ProxyMethodIndexer {
 
-    private val classEntry: PClassEntry by lazy {
+    val classEntry: PClassEntry by lazy {
         MetadataDeserializer().deserialize(staticPortrait.metadata)
     }
 
@@ -34,6 +34,18 @@ class StaticPClass<T : Any>(
     override val isSealed: Boolean get() = classEntry.isSealed
     override val isData: Boolean get() = classEntry.isData
     override val isCompanion: Boolean get() = classEntry.isCompanion
+    override val isEnum: Boolean get() = classEntry.isEnum
+    override val enumConstants: Array<T>?
+        get() =
+            if (classEntry.isEnum) {
+                try {
+                    staticPortrait.enumConstants
+                } catch (e: UnsupportedOperationException) {
+                    null
+                }
+            } else {
+                null
+            }
 
     override val objectInstance: T?
         get() =
@@ -68,7 +80,7 @@ class StaticPClass<T : Any>(
                 if (arg == null) {
                     !paramType.isPrimitive
                 } else {
-                    val argType = Portrait.from(arg)
+                    val argType = Portrait.forNameOrUnresolved(arg.javaClass.name)
                     paramType.isAssignableFrom(argType)
                 }
             }

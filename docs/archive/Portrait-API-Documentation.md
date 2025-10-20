@@ -61,6 +61,7 @@ Abstract representation of a class that provides controlled access to reflection
 **Location:** `tech.kaffa.portrait.PMethod`
 
 Abstract representation of a method with reflection capabilities.
+Portrait only materialises public methods, so visibility modifiers are implicit.
 
 **Properties:**
 
@@ -69,7 +70,6 @@ Abstract representation of a method with reflection capabilities.
 - `parameterCount: Int` - Number of parameters
 - `returnType: PClass<*>` - Return type
 - `declaringClass: PClass<*>` - Declaring class
-- Visibility: `isPublic`, `isPrivate`, `isProtected`
 - Modifiers: `isStatic`, `isFinal`, `isAbstract`
 - `annotations: List<PAnnotation>` - Method annotations
 - `parameterAnnotations: List<List<PAnnotation>>` - Parameter annotations
@@ -87,13 +87,13 @@ Abstract representation of a method with reflection capabilities.
 **Location:** `tech.kaffa.portrait.PField`
 
 Abstract representation of a field with reflection capabilities.
+Only public fields are emitted, so explicit visibility flags are unnecessary.
 
 **Properties:**
 
 - `name: String` - Field name
 - `type: PClass<*>` - Field type
 - `declaringClass: PClass<*>` - Declaring class
-- Visibility: `isPublic`, `isPrivate`, `isProtected`
 - Modifiers: `isStatic`, `isFinal`
 - `annotations: List<PAnnotation>` - Field annotations
 
@@ -109,12 +109,12 @@ Abstract representation of a field with reflection capabilities.
 **Location:** `tech.kaffa.portrait.PConstructor`
 
 Abstract representation of a constructor with reflection capabilities.
+Portrait restricts descriptors to public constructors, so visibility state is implicit.
 
 **Properties:**
 
 - `declaringClass: PClass<T>` - Declaring class
 - `parameterTypes: List<PClass<*>>` - Parameter types
-- Visibility: `isPublic`, `isPrivate`, `isProtected`
 - `annotations: List<PAnnotation>` - Constructor annotations
 
 **Key Methods:**

@@ -23,7 +23,7 @@ class PortraitGeneratorTest {
         every { mockScanResult.getClassInfo(any()) } returns null
 
 
-        val locator = ClassFileLocator.ForClassLoader.ofSystemLoader()
+        val locator = ClassFileLocator.NoOp.INSTANCE
 
         return ClasspathScanner.Result(
             setOf("com.example.TestInterface"),
@@ -77,7 +77,7 @@ class PortraitGeneratorTest {
 
         val mockEmptyScanResult = mockk<ScanResult>()
         every { mockEmptyScanResult.getClassInfo(any()) } returns null
-        val emptyLocator = ClassFileLocator.ForClassLoader.ofSystemLoader()
+        val emptyLocator = ClassFileLocator.NoOp.INSTANCE
         val emptyScanResult = ClasspathScanner.Result(
             emptySet(),
             emptySet(),
@@ -121,7 +121,7 @@ class PortraitGeneratorTest {
 
         val mockScanResultForNonInterface = mockk<ScanResult>()
         every { mockScanResultForNonInterface.getClassInfo(any()) } returns null
-        val locator = ClassFileLocator.ForClassLoader.ofSystemLoader()
+        val locator = ClassFileLocator.NoOp.INSTANCE
         val scanResult = ClasspathScanner.Result(
             emptySet(),
             setOf("com.example.NonInterfaceClass"),

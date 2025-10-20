@@ -11,6 +11,7 @@ import tech.kaffa.portrait.proxy.ProxyCreationException
 import tech.kaffa.portrait.proxy.ProxyHandler
 import java.lang.reflect.InvocationHandler
 import java.lang.reflect.Method
+import java.lang.reflect.Modifier
 import java.lang.reflect.Proxy
 import kotlin.reflect.KClass
 
@@ -75,46 +76,14 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     override val isSealed: Boolean = kClass.isSealed
     override val isData: Boolean = kClass.isData
     override val isCompanion: Boolean = kClass.isCompanion
+    override val isEnum: Boolean = kClass.java.isEnum
     override val objectInstance: T? = kClass.objectInstance
-
-    override fun createInstance(vararg args: Any?): T {
-        return if (args.isEmpty()) {
-            // No arguments - use default constructor
-            kClass.java.getDeclaredConstructor().newInstance()
+    override val enumConstants: Array<T>? by lazy {
+        if (!isEnum) {
+            null
         } else {
-            // Find constructor that matches the argument types
-            val argTypes = args.map { arg ->
-                when (arg) {
-                    null -> Any::class.java // For null arguments, we'll need more sophisticated matching
-                    else -> arg::class.java
-                }
-            }.toTypedArray()
-
-            // Try to find exact match first
-            val exactConstructor = try {
-                kClass.java.getDeclaredConstructor(*argTypes)
-            } catch (e: NoSuchMethodException) {
-                null
-            }
-
-            if (exactConstructor != null) {
-                exactConstructor.newInstance(*args)
-            } else {
-                // Try to find compatible constructor
-                val compatibleConstructor = kClass.java.declaredConstructors.find { constructor ->
-                    constructor.parameterCount == args.size &&
-                            constructor.parameterTypes.zip(args).all { (paramType, arg) ->
-                                arg == null || paramType.isAssignableFrom(arg::class.java)
-                            }
-                }
-
-                if (compatibleConstructor != null) {
-                    @Suppress("UNCHECKED_CAST")
-                    compatibleConstructor.newInstance(*args) as T
-                } else {
-                    throw IllegalArgumentException("No constructor found for arguments: ${args.map { it?.let { it::class.simpleName } ?: "null" }}")
-                }
-            }
+            @Suppress("UNCHECKED_CAST")
+            kClass.java.enumConstants as Array<T>?
         }
     }
 
@@ -150,10 +119,16 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     }
 
     override val constructors: List<PConstructor<T>> by lazy {
-        kClass.java.declaredConstructors.map {
-            @Suppress("UNCHECKED_CAST")
-            JvmPConstructor(it as java.lang.reflect.Constructor<T>)
-        }
+        kClass.java.declaredConstructors
+            .filter { Modifier.isPublic(it.modifiers) }
+            .sortedWith(compareBy(
+                { it.parameterCount },
+                { it.parameterTypes.joinToString(separator = "#") { type -> type.name } }
+            ))
+            .map {
+                @Suppress("UNCHECKED_CAST")
+                JvmPConstructor(it as java.lang.reflect.Constructor<T>)
+            }
     }
 
     override fun getConstructor(vararg parameterTypes: PClass<*>): PConstructor<T>? {
@@ -167,27 +142,38 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     }
 
     override val methods: List<PMethod> by lazy {
-        kClass.java.declaredMethods.map { JvmPMethod(it) }
+        kClass.java.declaredMethods
+            .filter { Modifier.isPublic(it.modifiers) }
+            .map { JvmPMethod(it) }
+            .sortedBy { it.name }
     }
 
-    override fun getMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? =
-        try {
-            val javaTypes = parameterTypes.map { pClassToJavaClass(it) }.toTypedArray()
-            JvmPMethod(kClass.java.getMethod(name, *javaTypes))
-        } catch (e: NoSuchMethodException) {
-            null
+    override fun getMethod(name: String, vararg parameterTypes: PClass<*>): PMethod? {
+        val candidates = methods.filter { it.name == name }
+        if (candidates.isEmpty()) return null
+
+        if (parameterTypes.isEmpty()) {
+            return candidates.singleOrNull()
         }
 
+        return candidates.firstOrNull { method ->
+            val params = method.parameterTypes
+            if (params.size != parameterTypes.size) return@firstOrNull false
+            params.zip(parameterTypes.toList()).all { (actual, expected) ->
+                actual.qualifiedName == expected.qualifiedName
+            }
+        }
+    }
+
     override val fields: List<PField> by lazy {
-        kClass.java.declaredFields.map { JvmPField(it) }
+        kClass.java.declaredFields
+            .filter { Modifier.isPublic(it.modifiers) }
+            .map { JvmPField(it) }
+            .sortedBy { it.name }
     }
 
     override fun getField(name: String): PField? =
-        try {
-            JvmPField(kClass.java.getDeclaredField(name))
-        } catch (e: NoSuchFieldException) {
-            null
-        }
+        fields.firstOrNull { it.name == name }
 
     override fun createProxy(handler: ProxyHandler<T>): T {
         // Validate that the class is suitable for proxying

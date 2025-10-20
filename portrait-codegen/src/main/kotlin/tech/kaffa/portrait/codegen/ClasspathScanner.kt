@@ -13,9 +13,13 @@ import tech.kaffa.portrait.codegen.scanner.ClasspathCollector
 import tech.kaffa.portrait.codegen.scanner.ProxyCollector
 import tech.kaffa.portrait.codegen.scanner.ReflectiveCollector
 import tech.kaffa.portrait.codegen.utils.ClassGraphLocator
+import java.io.IOException
 import java.util.*
 
-class ClasspathScanner(private val classpath: String) {
+class ClasspathScanner(
+    private val classpath: String,
+    private val classlibLocator: ClassFileLocator
+) {
     private lateinit var scanResult: ScanResult
     private lateinit var locator: ClassFileLocator
     private lateinit var pool: TypePool
@@ -50,9 +54,9 @@ class ClasspathScanner(private val classpath: String) {
             classgraph.overrideClasspath(classpath)
         }
         scanResult = classgraph.enableAllInfo().scan()
-        locator = ClassFileLocator.Compound(
+        locator = CombinedLocator(
             ClassGraphLocator(scanResult),
-            ClassFileLocator.ForClassLoader.ofSystemLoader()
+            classlibLocator
         )
         pool = TypePool.Default.of(locator)
         reflectives = ReflectiveCollector(scanResult, pool)
@@ -343,6 +347,42 @@ class ClasspathScanner(private val classpath: String) {
             runCatching { Includes.valueOf(name) }.getOrNull()?.let { includes.add(it) }
         }
         return includes
+    }
+
+    private class CombinedLocator(
+        private val classGraphLocator: ClassFileLocator,
+        private val classlibLocator: ClassFileLocator
+    ) : ClassFileLocator {
+        override fun locate(name: String): ClassFileLocator.Resolution {
+            val classGraphResolution = classGraphLocator.locate(name)
+            if (classGraphResolution.isResolved) {
+                return classGraphResolution
+            }
+            return classlibLocator.locate(name)
+        }
+
+        override fun close() {
+            var failure: Throwable? = null
+            failure = closeSafely(failure) { classGraphLocator.close() }
+            failure = closeSafely(failure) { classlibLocator.close() }
+
+            if (failure != null) {
+                if (failure is IOException) {
+                    throw failure
+                } else {
+                    throw IOException("Failed to close class file locators", failure)
+                }
+            }
+        }
+
+        private fun closeSafely(existing: Throwable?, block: () -> Unit): Throwable? {
+            return try {
+                block()
+                existing
+            } catch (t: Throwable) {
+                existing?.apply { addSuppressed(t) } ?: t
+            }
+        }
     }
 
     companion object {

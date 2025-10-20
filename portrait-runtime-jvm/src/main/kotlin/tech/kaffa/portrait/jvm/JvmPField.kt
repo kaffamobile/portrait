@@ -59,9 +59,6 @@ internal class JvmPField(private val field: Field) : PField() {
     override val name: String = field.name
     override val type: PClass<*> by lazy { Portrait.of(field.type) }
     override val declaringClass: PClass<*> by lazy { Portrait.of(field.declaringClass) }
-    override val isPublic: Boolean = Modifier.isPublic(field.modifiers)
-    override val isPrivate: Boolean = Modifier.isPrivate(field.modifiers)
-    override val isProtected: Boolean = Modifier.isProtected(field.modifiers)
     override val isStatic: Boolean = Modifier.isStatic(field.modifiers)
     override val isFinal: Boolean = Modifier.isFinal(field.modifiers)
 

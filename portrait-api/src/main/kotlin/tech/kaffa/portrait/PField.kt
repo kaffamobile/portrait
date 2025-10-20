@@ -17,15 +17,6 @@ abstract class PField {
     /** The class that declares this field */
     abstract val declaringClass: PClass<*>
 
-    /** True if this field has public visibility */
-    abstract val isPublic: Boolean
-
-    /** True if this field has private visibility */
-    abstract val isPrivate: Boolean
-
-    /** True if this field has protected visibility */
-    abstract val isProtected: Boolean
-
     /** True if this is a static field */
     abstract val isStatic: Boolean
 
@@ -78,10 +69,7 @@ abstract class PField {
         if (name != other.name) return false
         if (type.qualifiedName != other.type.qualifiedName) return false
 
-        val flagsMatch = isPublic == other.isPublic &&
-            isPrivate == other.isPrivate &&
-            isProtected == other.isProtected &&
-            isStatic == other.isStatic &&
+        val flagsMatch = isStatic == other.isStatic &&
             isFinal == other.isFinal
         if (!flagsMatch) return false
 
@@ -97,11 +85,8 @@ abstract class PField {
         result = mix(result, name.hashCode())
         result = mix(result, type.qualifiedName.hashCode())
 
-        val flags = (if (isPublic) 1 else 0) or
-            (if (isPrivate) 1 shl 1 else 0) or
-            (if (isProtected) 1 shl 2 else 0) or
-            (if (isStatic) 1 shl 3 else 0) or
-            (if (isFinal) 1 shl 4 else 0)
+        val flags = (if (isStatic) 1 else 0) or
+            (if (isFinal) 1 shl 1 else 0)
         result = mix(result, flags)
 
         result = mix(result, annotations.size)

@@ -19,6 +19,10 @@ public abstract class StaticPortrait<T> {
         throw new UnsupportedOperationException("Object instance not available");
     }
 
+    public T[] getEnumConstants() {
+        throw new UnsupportedOperationException("Class is not an enum.");
+    }
+
     // Instance creation
     public T createProxy(ProxyMethodIndexer indexer, ProxyHandler<T> handler) {
         throw new ProxyCreationException("Proxy creation not supported");

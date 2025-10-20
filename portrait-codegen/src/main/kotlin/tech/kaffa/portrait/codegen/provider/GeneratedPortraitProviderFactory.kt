@@ -46,7 +46,7 @@ class GeneratedPortraitProviderFactory(
      * @return Result containing the generated provider class
      */
     fun make(
-        generatedPortraits: List<PortraitClassFactory.Result>,
+        generatedPortraits: Set<PortraitClassFactory.Result>,
         packageName: String = "tech.kaffa.portrait.generated"
     ): Result {
         val providerClassName = "$packageName.GeneratedPortraitProvider"
@@ -72,7 +72,6 @@ class GeneratedPortraitProviderFactory(
                 AsmVisitorWrapper.ForDeclaredMethods()
                     .writerFlags(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)
             )
-
         val dynamicType = builder.make(typePool)
 
         return Result(dynamicType, providerClassName)

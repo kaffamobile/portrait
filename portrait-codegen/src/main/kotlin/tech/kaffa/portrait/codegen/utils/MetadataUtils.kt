@@ -18,9 +18,6 @@ fun FieldDescription.toPFieldEntry(declaringClassName: String): PFieldEntry {
         name = name,
         typeName = type.typeName,
         declaringClassName = declaringClassName,
-        isPublic = isPublic,
-        isPrivate = isPrivate,
-        isProtected = isProtected,
         isStatic = isStatic,
         isFinal = isFinal,
         annotations = toAnnotationEntries()
@@ -33,9 +30,6 @@ fun MethodDescription.toPMethodEntry(declaringClassName: String): PMethodEntry {
         parameterTypeNames = parameterTypeNames(),
         returnTypeName = returnTypeName(),
         declaringClassName = declaringClassName,
-        isPublic = isPublic,
-        isPrivate = isPrivate,
-        isProtected = isProtected,
         isStatic = isStatic,
         isFinal = isFinal,
         isAbstract = isAbstract,
@@ -48,10 +42,7 @@ fun MethodDescription.toPConstructorEntry(declaringClassName: String): PConstruc
     return PConstructorEntry(
         declaringClassName = declaringClassName,
         parameterTypeNames = parameterTypeNames(),
-        annotations = toAnnotationEntries(),
-        isPublic = isPublic,
-        isPrivate = isPrivate,
-        isProtected = isProtected
+        annotations = toAnnotationEntries()
     )
 }
 

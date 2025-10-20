@@ -56,15 +56,13 @@ object Portrait {
      */
     @JvmStatic
     fun <T : Any> of(clazz: Class<T>): PClass<T> {
-        val className = requireQualifiedClass(clazz)
-        return load(className)
+        return load(clazz.name)
             ?: throw PortraitNotFoundException("Cannot create portrait for known Java class: ${clazz.name}")
     }
 
     @JvmStatic
     fun <T : Any> of(clazz: KClass<T>): PClass<T> {
-        val className = requireQualifiedClass(clazz.java)
-        return load(className)
+        return load(clazz.java.name)
             ?: throw PortraitNotFoundException("Cannot create portrait for known Kotlin class: ${clazz.java.name}")
     }
 
@@ -79,8 +77,7 @@ object Portrait {
      */
     @JvmStatic
     fun <T : Any> from(instance: T): PClass<T> {
-        val className = requireQualifiedClass(instance.javaClass)
-        return load(className)
+        return load(instance.javaClass.name)
             ?: throw PortraitNotFoundException("Cannot create portrait for instance of type: ${instance.javaClass.name}")
     }
 
@@ -154,6 +151,7 @@ object Portrait {
             return null
 
         } catch (e: Exception) {
+            e.printStackTrace()
             // Remove loading marker on error
             cache.remove(className)
             throw e
@@ -234,25 +232,7 @@ object Portrait {
             }
     }
 
-    /**
-     * Validates that the supplied [Class] exposes a canonical name so Portrait can use it as a
-     * stable lookup key. Local and anonymous classes don't meet this contract and must be rejected
-     * before reaching providers.
-     *
-     * @throws IllegalArgumentException when [clazz] lacks a canonical name
-     */
-    private fun requireQualifiedClass(clazz: Class<*>): String {
-        val canonicalName = clazz.canonicalName
-        if (canonicalName == null) {
-            val descriptor = when {
-                clazz.isAnonymousClass -> "anonymous"
-                clazz.isLocalClass -> "local"
-                else -> "synthetic"
-            }
-            throw IllegalArgumentException(
-                "Portrait cannot reflect $descriptor class ${clazz.name}. Local and anonymous classes are unsupported; provide a top-level or member type instead."
-            )
-        }
-        return clazz.name
+    fun debug() {
+        println(providers)
     }
 }

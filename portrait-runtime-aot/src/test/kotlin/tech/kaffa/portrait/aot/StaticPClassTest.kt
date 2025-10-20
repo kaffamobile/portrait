@@ -28,6 +28,7 @@ class StaticPClassTest {
             isData = true,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = "java.lang.Object",
             interfaceNames = listOf("java.io.Serializable"),
@@ -43,10 +44,7 @@ class StaticPClassTest {
                 PConstructorEntry(
                     declaringClassName = "com.example.TestClass",
                     parameterTypeNames = emptyList(),
-                    annotations = emptyList(),
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false
+                    annotations = emptyList()
                 )
             ),
             declaredMethods = listOf(
@@ -55,9 +53,6 @@ class StaticPClassTest {
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
                     declaringClassName = "com.example.TestClass",
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = false,
                     isAbstract = false,
@@ -70,9 +65,6 @@ class StaticPClassTest {
                     name = "testField",
                     typeName = "java.lang.String",
                     declaringClassName = "com.example.TestClass",
-                    isPublic = false,
-                    isPrivate = true,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = true,
                     annotations = emptyList()
@@ -84,9 +76,6 @@ class StaticPClassTest {
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
                     declaringClassName = "com.example.TestClass\$Proxy",
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = false,
                     isAbstract = false,
@@ -110,6 +99,7 @@ class StaticPClassTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "java.lang.Integer",
             superclassName = "java.lang.Number",
             interfaceNames = listOf("java.lang.Comparable", "java.io.Serializable"),
@@ -134,6 +124,7 @@ class StaticPClassTest {
             isData = false,
             isCompanion = false,
             isObject = true,
+            isEnum = false,
             javaClassName = "com.example.TestSingleton",
             superclassName = "java.lang.Object",
             interfaceNames = emptyList(),

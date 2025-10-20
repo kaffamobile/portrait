@@ -24,10 +24,7 @@ class StaticPConstructorTest {
                     qualifiedName = "com.example.ConstructorAnnotation",
                     properties = mapOf("value" to "constructor-level")
                 )
-            ),
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false
+            )
         )
     }
 
@@ -41,9 +38,6 @@ class StaticPConstructorTest {
 
         assertEquals(2, staticPConstructor.parameterTypes.size)
         assertEquals(mockDeclaringClass, staticPConstructor.declaringClass)
-        assertTrue(staticPConstructor.isPublic)
-        assertFalse(staticPConstructor.isPrivate)
-        assertFalse(staticPConstructor.isProtected)
     }
 
     @Test
@@ -161,44 +155,6 @@ class StaticPConstructorTest {
         val actualAnnotationClass = annotations[0].annotationClass
         assertTrue(staticPConstructor.hasAnnotation(actualAnnotationClass))
         assertNotNull(staticPConstructor.getAnnotation(actualAnnotationClass))
-    }
-
-    @Test
-    fun `StaticPConstructor visibility modifiers`() {
-        val mockPortrait = mockk<StaticPortrait<TestClass>>()
-        val mockDeclaringClass = mockk<PClass<TestClass>>()
-
-        val publicConstructor = createTestConstructorEntry().copy(
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false
-        )
-        val protectedConstructor = createTestConstructorEntry().copy(
-            isPublic = false,
-            isPrivate = false,
-            isProtected = true
-        )
-        val privateConstructor = createTestConstructorEntry().copy(
-            isPublic = false,
-            isPrivate = true,
-            isProtected = false
-        )
-
-        val staticPublicConstructor = StaticPConstructor(publicConstructor, -1, mockDeclaringClass, mockPortrait)
-        val staticProtectedConstructor = StaticPConstructor(protectedConstructor, -1, mockDeclaringClass, mockPortrait)
-        val staticPrivateConstructor = StaticPConstructor(privateConstructor, -1, mockDeclaringClass, mockPortrait)
-
-        assertTrue(staticPublicConstructor.isPublic)
-        assertFalse(staticPublicConstructor.isPrivate)
-        assertFalse(staticPublicConstructor.isProtected)
-
-        assertFalse(staticProtectedConstructor.isPublic)
-        assertFalse(staticProtectedConstructor.isPrivate)
-        assertTrue(staticProtectedConstructor.isProtected)
-
-        assertFalse(staticPrivateConstructor.isPublic)
-        assertTrue(staticPrivateConstructor.isPrivate)
-        assertFalse(staticPrivateConstructor.isProtected)
     }
 
     @Test

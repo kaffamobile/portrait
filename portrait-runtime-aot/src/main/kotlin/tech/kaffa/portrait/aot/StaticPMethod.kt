@@ -33,9 +33,6 @@ class StaticPMethod(
         Portrait.forNameOrUnresolved(methodEntry.declaringClassName)
     }
 
-    override val isPublic: Boolean get() = methodEntry.isPublic
-    override val isPrivate: Boolean get() = methodEntry.isPrivate
-    override val isProtected: Boolean get() = methodEntry.isProtected
     override val isStatic: Boolean get() = methodEntry.isStatic
     override val isFinal: Boolean get() = methodEntry.isFinal
     override val isAbstract: Boolean get() = methodEntry.isAbstract

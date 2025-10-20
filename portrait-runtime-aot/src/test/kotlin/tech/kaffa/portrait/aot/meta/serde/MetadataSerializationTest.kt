@@ -21,9 +21,6 @@ class MetadataSerializationTest {
             parameterTypeNames = listOf("java.lang.String"),
             returnTypeName = "java.lang.Object",
             declaringClassName = "com.example.TestClass\$Proxy",
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false,
             isStatic = false,
             isFinal = false,
             isAbstract = false,
@@ -39,6 +36,7 @@ class MetadataSerializationTest {
             isData = true,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = "java.lang.Object",
             interfaceNames = listOf("java.io.Serializable"),
@@ -59,6 +57,7 @@ class MetadataSerializationTest {
         assertEquals(originalEntry.isData, deserialized.isData)
         assertEquals(originalEntry.isCompanion, deserialized.isCompanion)
         assertEquals(originalEntry.isObject, deserialized.isObject)
+        assertEquals(originalEntry.isEnum, deserialized.isEnum)
         assertEquals(originalEntry.javaClassName, deserialized.javaClassName)
         assertEquals(originalEntry.superclassName, deserialized.superclassName)
         assertEquals(originalEntry.interfaceNames, deserialized.interfaceNames)
@@ -75,9 +74,6 @@ class MetadataSerializationTest {
             parameterTypeNames = listOf("java.lang.String", "int"),
             returnTypeName = "java.lang.Object",
             declaringClassName = "com.example.TestClass",
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false,
             isStatic = false,
             isFinal = true,
             isAbstract = false,
@@ -93,6 +89,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -113,7 +110,6 @@ class MetadataSerializationTest {
         assertEquals(methodEntry.parameterTypeNames, deserializedMethod.parameterTypeNames)
         assertEquals(methodEntry.returnTypeName, deserializedMethod.returnTypeName)
         assertEquals(methodEntry.declaringClassName, deserializedMethod.declaringClassName)
-        assertEquals(methodEntry.isPublic, deserializedMethod.isPublic)
         assertEquals(methodEntry.isStatic, deserializedMethod.isStatic)
         assertEquals(methodEntry.isFinal, deserializedMethod.isFinal)
     }
@@ -127,9 +123,6 @@ class MetadataSerializationTest {
             name = "testField",
             typeName = "java.lang.String",
             declaringClassName = "com.example.TestClass",
-            isPublic = false,
-            isPrivate = true,
-            isProtected = false,
             isStatic = false,
             isFinal = true,
             annotations = emptyList()
@@ -143,6 +136,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -162,8 +156,6 @@ class MetadataSerializationTest {
         assertEquals(fieldEntry.name, deserializedField.name)
         assertEquals(fieldEntry.typeName, deserializedField.typeName)
         assertEquals(fieldEntry.declaringClassName, deserializedField.declaringClassName)
-        assertEquals(fieldEntry.isPublic, deserializedField.isPublic)
-        assertEquals(fieldEntry.isPrivate, deserializedField.isPrivate)
         assertEquals(fieldEntry.isStatic, deserializedField.isStatic)
         assertEquals(fieldEntry.isFinal, deserializedField.isFinal)
     }
@@ -176,10 +168,7 @@ class MetadataSerializationTest {
         val constructorEntry = PConstructorEntry(
             declaringClassName = "com.example.TestClass",
             parameterTypeNames = listOf("java.lang.String", "int"),
-            annotations = emptyList(),
-            isPublic = true,
-            isPrivate = false,
-            isProtected = false
+            annotations = emptyList()
         )
 
         val classEntry = PClassEntry(
@@ -190,6 +179,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -208,9 +198,6 @@ class MetadataSerializationTest {
 
         assertEquals(constructorEntry.declaringClassName, deserializedConstructor.declaringClassName)
         assertEquals(constructorEntry.parameterTypeNames, deserializedConstructor.parameterTypeNames)
-        assertEquals(constructorEntry.isPublic, deserializedConstructor.isPublic)
-        assertEquals(constructorEntry.isPrivate, deserializedConstructor.isPrivate)
-        assertEquals(constructorEntry.isProtected, deserializedConstructor.isProtected)
     }
 
     @Test
@@ -237,6 +224,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = false,
+            isEnum = false,
             javaClassName = "com.example.TestClass",
             superclassName = null,
             interfaceNames = emptyList(),
@@ -272,6 +260,7 @@ class MetadataSerializationTest {
             isData = false,
             isCompanion = false,
             isObject = true,
+            isEnum = false,
             javaClassName = "com.example.ComplexClass",
             superclassName = "java.lang.Object",
             interfaceNames = listOf("java.io.Serializable", "java.lang.Comparable"),
@@ -287,10 +276,7 @@ class MetadataSerializationTest {
                 PConstructorEntry(
                     declaringClassName = "com.example.ComplexClass",
                     parameterTypeNames = emptyList(),
-                    annotations = emptyList(),
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false
+                    annotations = emptyList()
                 )
             ),
             declaredMethods = listOf(
@@ -299,9 +285,6 @@ class MetadataSerializationTest {
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
                     declaringClassName = "com.example.ComplexClass",
-                    isPublic = true,
-                    isPrivate = false,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = false,
                     isAbstract = false,
@@ -314,9 +297,6 @@ class MetadataSerializationTest {
                     name = "complexField",
                     typeName = "java.lang.String",
                     declaringClassName = "com.example.ComplexClass",
-                    isPublic = false,
-                    isPrivate = true,
-                    isProtected = false,
                     isStatic = false,
                     isFinal = true,
                     annotations = emptyList()
@@ -334,6 +314,7 @@ class MetadataSerializationTest {
         assertEquals(complexClassEntry.simpleName, deserialized.simpleName)
         assertEquals(complexClassEntry.isSealed, deserialized.isSealed)
         assertEquals(complexClassEntry.isObject, deserialized.isObject)
+        assertEquals(complexClassEntry.isEnum, deserialized.isEnum)
         assertEquals(complexClassEntry.interfaceNames.size, deserialized.interfaceNames.size)
         assertEquals(complexClassEntry.annotations.size, deserialized.annotations.size)
         assertEquals(complexClassEntry.constructors.size, deserialized.constructors.size)

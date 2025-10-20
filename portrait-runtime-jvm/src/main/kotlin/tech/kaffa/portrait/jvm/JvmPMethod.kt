@@ -61,18 +61,19 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
     override val parameterCount: Int = method.parameterCount
     override val returnType: PClass<*> by lazy { Portrait.of(method.returnType) }
     override val declaringClass: PClass<*> by lazy { Portrait.of(method.declaringClass) }
-    override val isPublic: Boolean = Modifier.isPublic(method.modifiers)
-    override val isPrivate: Boolean = Modifier.isPrivate(method.modifiers)
-    override val isProtected: Boolean = Modifier.isProtected(method.modifiers)
     override val isStatic: Boolean = Modifier.isStatic(method.modifiers)
     override val isFinal: Boolean = Modifier.isFinal(method.modifiers)
     override val isAbstract: Boolean = Modifier.isAbstract(method.modifiers)
 
     override fun invoke(instance: Any?, vararg args: Any?): Any? {
-        if (!method.isAccessible) {
-            method.isAccessible = true
+        return try {
+            method.invoke(instance, *args)
+        } catch (exception: java.lang.reflect.InvocationTargetException) {
+            val cause = exception.cause ?: exception
+            if (cause is RuntimeException) throw cause
+            if (cause is Error) throw cause
+            throw cause
         }
-        return method.invoke(instance, *args)
     }
 
     override val annotations: List<PAnnotation> =

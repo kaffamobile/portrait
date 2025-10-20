@@ -12,8 +12,11 @@ fun MethodDescription.returnTypeName(): String =
 fun TypeDescription.isObjectClass(): Boolean =
     represents(Any::class.java)
 
-fun TypeDescription.superclassNameOrNull(): String? =
-    superClass?.takeIf { !it.represents(Any::class.java) }?.typeName
+fun TypeDescription.superclassNameOrNull(): String? {
+    if (isPrimitive || isInterface || isObjectClass()) return null
+
+    return superClass?.asErasure()?.typeName
+}
 
 fun TypeDescription.interfaceNames(): List<String> =
     interfaces.asErasures().map { it.typeName }

@@ -43,7 +43,7 @@ class PortraitClassFactory(
     private fun generatedClassName(superType: TypeDescription): String {
         val originalName = superType.name
         return if (originalName.startsWith("java.")) {
-            "tech.kaffa.portrait.generated.jdk.$originalName\$Portrait"
+            "tech.kaffa.portrait.generated.jdk.${originalName}Portrait"
         } else {
             "$originalName\$Portrait"
         }
@@ -93,6 +93,13 @@ class PortraitClassFactory(
                 "Failed to extract Kotlin object instance information for class '${superType.name}': ${e.message}",
                 e
             )
+        }
+
+        // Add Kotlin enum support
+        if (superType.isEnum) {
+            builder = builder
+                .defineMethod("getEnumConstants", Array<Any>::class.java, Visibility.PUBLIC)
+                .intercept(EnumConstantsMethodImpl(superType))
         }
 
         // Add constructor support (skip for abstract/interface classes)
@@ -183,6 +190,7 @@ class PortraitClassFactory(
             isData = kotlinMetadata?.isData ?: false,
             isCompanion = kotlinMetadata?.kind == ClassKind.COMPANION_OBJECT,
             isObject = kotlinMetadata?.kind == ClassKind.OBJECT,
+            isEnum = typeDescription.isEnum,
             javaClassName = typeDescription.typeName,
             superclassName = typeDescription.superclassNameOrNull(),
             interfaceNames = typeDescription.interfaceNames(),

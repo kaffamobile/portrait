@@ -28,10 +28,6 @@ class StaticPConstructor<T : Any>(
         constructorEntry.annotations.map { StaticPAnnotation(it) }
     }
 
-    override val isPublic: Boolean get() = constructorEntry.isPublic
-    override val isPrivate: Boolean get() = constructorEntry.isPrivate
-    override val isProtected: Boolean get() = constructorEntry.isProtected
-
     override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? =
         annotations.find { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
 

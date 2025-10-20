@@ -47,24 +47,41 @@ class UtilsTest {
     @Test
     fun `TypeDescription superclass handling`() {
         val mockTypeDesc = mockk<TypeDescription>()
-        val mockSuperClass = mockk<TypeDescription>()
-        val mockObjectClass = mockk<TypeDescription>()
         val mockSuperGeneric = mockk<TypeDescription.Generic>()
-        val mockObjectGeneric = mockk<TypeDescription.Generic>()
 
-        every { mockSuperClass.asGenericType() } returns mockSuperGeneric
-        every { mockSuperGeneric.represents(Any::class.java) } returns false
-        every { mockSuperGeneric.typeName } returns "com.example.SuperClass"
+        val mockSuperClass = mockk<TypeDescription>()
+
+        every { mockTypeDesc.isPrimitive } returns false
+        every { mockTypeDesc.isInterface } returns false
+        every { mockTypeDesc.represents(Any::class.java) } returns false
         every { mockTypeDesc.superClass } returns mockSuperGeneric
+        every { mockSuperGeneric.asErasure() } returns mockSuperClass
+        every { mockSuperClass.typeName } returns "com.example.SuperClass"
 
         assertEquals("com.example.SuperClass", mockTypeDesc.superclassNameOrNull())
 
-        // Test with Object superclass (should return null)
-        every { mockObjectClass.asGenericType() } returns mockObjectGeneric
-        every { mockObjectGeneric.represents(Any::class.java) } returns true
-        every { mockTypeDesc.superClass } returns mockObjectGeneric
+        // Test with Object superclass (should return java.lang.Object)
+        every { mockSuperClass.typeName } returns "java.lang.Object"
 
-        assertNull(mockTypeDesc.superclassNameOrNull())
+        assertEquals("java.lang.Object", mockTypeDesc.superclassNameOrNull())
+    }
+
+    @Test
+    fun `TypeDescription superclass handling for interfaces`() {
+        val mockInterfaceDesc = mockk<TypeDescription>()
+
+        every { mockInterfaceDesc.isPrimitive } returns false
+        every { mockInterfaceDesc.isInterface } returns true
+        every { mockInterfaceDesc.represents(Any::class.java) } returns false
+
+        assertNull(mockInterfaceDesc.superclassNameOrNull())
+    }
+
+    @Test
+    fun `TypeDescription superclass handling for loaded types`() {
+        val stringTypeDesc = TypeDescription.ForLoadedType.of(String::class.java)
+
+        assertEquals("java.lang.Object", stringTypeDesc.superclassNameOrNull())
     }
 
     @Test

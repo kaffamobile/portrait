@@ -68,6 +68,23 @@ abstract class PClass<T : Any> {
     abstract val isCompanion: Boolean
 
     /**
+     * True when this descriptor represents a Kotlin/JVM enum type.
+     *
+     * Implementations must keep this value consistent with [enumConstants] and ensure it only
+     * flips to `true` when the backing type is a proper enum.
+     */
+    open val isEnum: Boolean = false
+
+    /**
+     * Enum constants declared by this type when [isEnum] is `true`; `null` otherwise.
+     *
+     * Providers should return a stable snapshot that preserves declaration order. Implementations
+     * may compute the array lazily, but must always return the same instance for repeated calls to
+     * guarantee reference equality semantics.
+     */
+    open val enumConstants: Array<T>? get() = null
+
+    /**
      * The singleton instance if the type is a Kotlin object; null otherwise.
      *
      * Implementations may compute this lazily but must guarantee idempotence. Non-object instances

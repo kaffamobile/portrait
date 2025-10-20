@@ -21,9 +21,9 @@ class PortraitGenerator private constructor(
     private val scan: ClasspathScanner.Result
 ) : Closeable {
     private val byteBuddy = ByteBuddy().with(ClassFileVersion.JAVA_V8)
-    private val classpathMap = ExplicitClassLocator()
+    private val generatedTypes = ExplicitClassLocator()
     private val typePool = TypePool.Default.of(
-        ClassFileLocator.Compound(classpathMap, scan.locator)
+        ClassFileLocator.Compound(generatedTypes, scan.locator)
     )
 
     interface GeneratedClass {
@@ -40,17 +40,17 @@ class PortraitGenerator private constructor(
      */
     fun generate() {
         val generatedProxies = mutableMapOf<String, ProxyClassFactory.Result>()
+        val generatedPortraits = mutableSetOf<PortraitClassFactory.Result>()
 
         for (proxy in generateProxyClasses()) {
             generatedProxies[proxy.superType.name] = proxy
-            classpathMap.add(proxy.dynamicType)
+            generatedTypes.add(proxy.dynamicType)
             output.writeGeneratedClass(proxy)
         }
 
-        val generatedPortraits = generatePortraitClasses(generatedProxies).toList()
-
-        for (portrait in generatedPortraits) {
-            classpathMap.add(portrait.dynamicType)
+        for (portrait in generatePortraitClasses(generatedProxies)) {
+            generatedPortraits.add(portrait)
+            generatedTypes.add(portrait.dynamicType)
             output.writeGeneratedClass(portrait)
         }
 
@@ -70,7 +70,10 @@ class PortraitGenerator private constructor(
                 }
                 try {
                     val typeDescription = typePool.describe(className).resolve()
-                    if (!typeDescription.isInterface) {
+                    if (!typeDescription.isPublic) {
+                        logger.debug("Skipping proxy generation for $className because it is not public")
+                        null
+                    } else if (!typeDescription.isInterface) {
                         logger.debug("Skipping proxy generation for $className because it is not an interface")
                         null
                     } else {
@@ -92,7 +95,13 @@ class PortraitGenerator private constructor(
             .filter { shouldGeneratePortrait(it) }
             .mapNotNull { className ->
                 try {
-                    factory.make(typePool.describe(className).resolve())
+                    val typeDescription = typePool.describe(className).resolve()
+                    if (!typeDescription.isPublic) {
+                        logger.debug("Skipping portrait generation for $className because it is not public")
+                        null
+                    } else {
+                        factory.make(typeDescription)
+                    }
                 } catch (e: Exception) {
                     logger.warn("Failed to generate portrait class for $className: ${e.message}", e)
                     null
@@ -100,7 +109,8 @@ class PortraitGenerator private constructor(
             }
     }
 
-    private fun generatePortraitProvider(generatedPortraits: List<PortraitClassFactory.Result>) {
+    private fun generatePortraitProvider(generatedPortraits: Set<PortraitClassFactory.Result>) {
+
         val providerFactory = GeneratedPortraitProviderFactory(byteBuddy, typePool)
         val providerResult = providerFactory.make(generatedPortraits)
 
@@ -109,12 +119,7 @@ class PortraitGenerator private constructor(
     }
 
     private fun shouldGeneratePortrait(className: String): Boolean {
-        if (className.isBlank()) return false
-        if (className in PRIMITIVE_NAMES) return false
-        if (className.endsWith("[]")) return false
-        // Allow synthetic nested classes and Kotlin companions (`$`), but ignore simple names without package.
-        if (!className.contains('.') && className !in PRIMITIVE_NAMES) return false
-        return true
+        return className.isNotBlank() && className !in PRIMITIVE_NAMES && !className.endsWith("[]")
     }
 
     enum class OutputType { JAR, FOLDER }
