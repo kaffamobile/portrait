@@ -9,7 +9,7 @@ import net.bytebuddy.description.method.MethodList
 import net.bytebuddy.description.method.ParameterList
 import net.bytebuddy.description.type.TypeDescription
 import net.bytebuddy.description.type.TypeList
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull

@@ -2,8 +2,8 @@ package tech.kaffa.portrait
 
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import tech.kaffa.portrait.provider.PortraitProvider
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
@@ -42,7 +42,7 @@ class PortraitTest {
     fun `Portrait forName should handle class name`() {
         val className = "tech.kaffa.portrait.TestClass"
         // This test verifies the method signature and basic behavior
-        assertThrows<RuntimeException> {
+        assertFailsWith<RuntimeException> {
             Portrait.forName(className)
         }
     }
@@ -50,14 +50,14 @@ class PortraitTest {
     @Test
     fun `Portrait should throw RuntimeException when no provider found`() {
         // When no providers are available or none can handle the class
-        assertThrows<RuntimeException> {
+        assertFailsWith<RuntimeException> {
             Portrait.of(TestClass::class.java)
         }
     }
 
     @Test
     fun `Portrait should throw RuntimeException for unknown class name`() {
-        assertThrows<RuntimeException> {
+        assertFailsWith<RuntimeException> {
             Portrait.forName("unknown.class.Name")
         }
     }
@@ -74,7 +74,7 @@ class PortraitTest {
     fun `Portrait should throw RuntimeException when no providers available`() {
         // This would be tested by manipulating the ServiceLoader, 
         // which is complex in unit tests but important for integration tests
-        assertThrows<RuntimeException> {
+        assertFailsWith<RuntimeException> {
             Portrait.of(TestClass::class.java)
         }
     }
@@ -82,7 +82,7 @@ class PortraitTest {
     @Test
     fun `Portrait methods should handle null returns from providers gracefully`() {
         // Test that when providers return null, Portrait handles it correctly
-        assertThrows<RuntimeException> {
+        assertFailsWith<RuntimeException> {
             Portrait.of(TestClass::class.java)
         }
     }
@@ -93,7 +93,7 @@ class PortraitTest {
             override fun run() = Unit
         }
 
-        val error = assertThrows<IllegalArgumentException> {
+        val error = assertFailsWith<IllegalArgumentException> {
             Portrait.from(anonymous)
         }
 

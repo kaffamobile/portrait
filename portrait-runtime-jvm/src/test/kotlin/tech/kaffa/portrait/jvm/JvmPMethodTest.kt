@@ -1,7 +1,7 @@
 package tech.kaffa.portrait.jvm
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
+import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import tech.kaffa.portrait.Portrait
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -100,7 +100,7 @@ class JvmPMethodTest {
         val testString = "hello"
 
         // This should throw StringIndexOutOfBoundsException
-        assertThrows<Exception> {
+        assertFailsWith<Exception> {
             charAtMethod.invoke(testString, 10)
         }
     }
@@ -168,3 +168,5 @@ class JvmPMethodTest {
         }
     }
 }
+
+

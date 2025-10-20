@@ -1,14 +1,14 @@
 package tech.kaffa.portrait.e2e
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
+import kotlin.test.Test
 import tech.kaffa.portrait.Portrait
 import tech.kaffa.portrait.e2e.fixtures.Calculator
 
 /**
  * E2E tests for Portrait proxy generation.
- * These tests run on JVM (via JUnit).
+ * These tests run on JVM.
  * To enable TeaVM support, see build.gradle.kts for instructions.
  */
 class ProxyTest {

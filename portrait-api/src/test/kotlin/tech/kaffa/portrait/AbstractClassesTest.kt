@@ -2,7 +2,7 @@ package tech.kaffa.portrait
 
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.proxy.ProxyHandler
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

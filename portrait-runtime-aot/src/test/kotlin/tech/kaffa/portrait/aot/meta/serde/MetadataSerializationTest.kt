@@ -1,6 +1,6 @@
 package tech.kaffa.portrait.aot.meta.serde
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import tech.kaffa.portrait.aot.meta.PClassEntry
 import tech.kaffa.portrait.aot.meta.PConstructorEntry
@@ -341,3 +341,4 @@ class MetadataSerializationTest {
         assertEquals(complexClassEntry.declaredFields.size, deserialized.declaredFields.size)
     }
 }
+

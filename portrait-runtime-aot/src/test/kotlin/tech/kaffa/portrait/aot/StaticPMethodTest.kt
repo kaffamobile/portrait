@@ -2,7 +2,7 @@ package tech.kaffa.portrait.aot
 
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
 import kotlin.test.assertEquals

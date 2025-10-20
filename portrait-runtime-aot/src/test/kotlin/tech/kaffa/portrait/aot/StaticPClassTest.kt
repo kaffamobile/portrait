@@ -2,7 +2,7 @@ package tech.kaffa.portrait.aot
 
 import io.mockk.every
 import io.mockk.mockk
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.PClass
 import tech.kaffa.portrait.Portrait
 import tech.kaffa.portrait.aot.meta.PAnnotationEntry
@@ -360,3 +360,4 @@ class StaticPClassTest {
         assertEquals("TestAnnotation", annotations[0].annotationClass.simpleName)
     }
 }
+

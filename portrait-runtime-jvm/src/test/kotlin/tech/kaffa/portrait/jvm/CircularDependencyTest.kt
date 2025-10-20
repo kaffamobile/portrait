@@ -1,9 +1,9 @@
 package tech.kaffa.portrait.jvm
 
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertDoesNotThrow
+import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.fail
 
 /**
  * Test to verify that circular dependencies are properly handled with lazy loading.
@@ -63,5 +63,13 @@ class CircularDependencyTest {
 
         // Even if these are null due to provider setup issues,
         // the important thing is that we don't get StackOverflowError
+    }
+}
+
+private inline fun <T> assertDoesNotThrow(block: () -> T): T {
+    return try {
+        block()
+    } catch (throwable: Throwable) {
+        fail("Expected no exception, but caught ${throwable::class.simpleName}: ${throwable.message}")
     }
 }

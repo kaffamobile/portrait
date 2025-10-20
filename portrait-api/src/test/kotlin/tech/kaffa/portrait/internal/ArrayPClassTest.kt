@@ -2,13 +2,13 @@ package tech.kaffa.portrait.internal
 
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import tech.kaffa.portrait.Portrait
 
 class ArrayPClassTest {
 
-    @BeforeEach
+    @BeforeTest
     fun clearCache() {
         Portrait.clearCache()
     }
@@ -72,3 +72,5 @@ class ArrayPClassTest {
         )
     }
 }
+
+

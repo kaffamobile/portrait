@@ -1,6 +1,6 @@
 package tech.kaffa.portrait.jvm
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
@@ -195,3 +195,4 @@ class JvmPAnnotationTest {
         }
     }
 }
+

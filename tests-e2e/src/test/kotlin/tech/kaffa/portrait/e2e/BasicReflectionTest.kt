@@ -1,10 +1,10 @@
 package tech.kaffa.portrait.e2e
 
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertNotNull
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 import tech.kaffa.portrait.Portrait
 import tech.kaffa.portrait.e2e.fixtures.Addition
 import tech.kaffa.portrait.e2e.fixtures.FieldTestClass
@@ -17,10 +17,11 @@ import tech.kaffa.portrait.e2e.fixtures.SingletonService
 import tech.kaffa.portrait.e2e.fixtures.Status
 import tech.kaffa.portrait.internal.UnresolvedPClass
 import tech.kaffa.portrait.portrait
+import kotlin.test.assertIs
 
 /**
  * Basic E2E tests for Portrait reflection API.
- * These tests run on JVM (via JUnit).
+ * These tests run on JVM.
  * To enable TeaVM support, see build.gradle.kts for instructions.
  */
 class BasicReflectionTest {
@@ -40,7 +41,8 @@ class BasicReflectionTest {
         val constructor = pClass.getConstructor(String::class.java.portrait, Int::class.java.portrait)
 
         assertNotNull(constructor)
-        val instance = constructor?.call("Test", 100) as SimpleReflectiveClass
+        val instance = constructor.call("Test", 100)
+        assertIs<SimpleReflectiveClass>(instance)
 
         assertEquals("Test", instance.name)
         assertEquals(100, instance.value)
@@ -54,7 +56,7 @@ class BasicReflectionTest {
         val greetMethod = pClass.getMethod("greet")
         assertNotNull(greetMethod)
 
-        val result = greetMethod?.invoke(instance) as String
+        val result = greetMethod.invoke(instance) as String
         assertEquals("Hello, World!", result)
     }
 
@@ -66,7 +68,7 @@ class BasicReflectionTest {
         val calculateMethod = pClass.getMethod("calculate", Int::class.java.portrait)
         assertNotNull(calculateMethod)
 
-        val result = calculateMethod?.invoke(instance, 3) as Int
+        val result = calculateMethod.invoke(instance, 3) as Int
         assertEquals(15, result)
     }
 
@@ -78,7 +80,7 @@ class BasicReflectionTest {
         val publicField = pClass.getField("publicField")
         assertNotNull(publicField)
 
-        val value = publicField!!.get(instance) as String
+        val value = publicField.get(instance) as String
         assertEquals("public", value)
 
         publicField.set(instance, "modified")
@@ -129,14 +131,16 @@ class BasicReflectionTest {
         val constructor1 = pClass.getConstructor(String::class.java.portrait)
         assertNotNull(constructor1)
 
-        val instance1 = constructor1?.call("Test1") as MultiConstructorClass
+        val instance1 = constructor1.call("Test1")
+        assertIs<MultiConstructorClass>(instance1)
         assertEquals("Test1", instance1.name)
         assertEquals(0, instance1.value)
 
         val constructor2 = pClass.getConstructor(String::class.java.portrait, Int::class.java.portrait)
         assertNotNull(constructor2)
 
-        val instance2 = constructor2?.call("Test2", 42) as MultiConstructorClass
+        val instance2 = constructor2.call("Test2", 42)
+        assertIs<MultiConstructorClass>(instance2)
         assertEquals("Test2", instance2.name)
         assertEquals(42, instance2.value)
     }
@@ -161,10 +165,10 @@ class BasicReflectionTest {
         assertNotNull(incrementMethod)
         assertNotNull(getStateMethod)
 
-        val result1 = incrementMethod?.invoke(instance) as Int
+        val result1 = incrementMethod.invoke(instance) as Int
         assertEquals(1, result1)
 
-        val state = getStateMethod?.invoke(instance) as Int
+        val state = getStateMethod.invoke(instance) as Int
         assertEquals(1, state)
     }
 

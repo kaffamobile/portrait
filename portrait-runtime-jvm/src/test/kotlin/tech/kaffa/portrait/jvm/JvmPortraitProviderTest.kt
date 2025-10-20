@@ -1,6 +1,6 @@
 package tech.kaffa.portrait.jvm
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.Portrait
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

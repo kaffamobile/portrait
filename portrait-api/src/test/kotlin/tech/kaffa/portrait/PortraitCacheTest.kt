@@ -1,12 +1,12 @@
 package tech.kaffa.portrait
 
-import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Test
+import kotlin.test.BeforeTest
+import kotlin.test.Test
 import kotlin.test.assertFailsWith
 
 class PortraitCacheTest {
 
-    @BeforeEach
+    @BeforeTest
     fun clearCache() {
         Portrait.clearCache()
     }
@@ -56,3 +56,4 @@ class PortraitCacheTest {
         }
     }
 }
+

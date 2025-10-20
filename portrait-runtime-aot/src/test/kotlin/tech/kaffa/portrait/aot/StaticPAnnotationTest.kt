@@ -1,6 +1,6 @@
 package tech.kaffa.portrait.aot
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull

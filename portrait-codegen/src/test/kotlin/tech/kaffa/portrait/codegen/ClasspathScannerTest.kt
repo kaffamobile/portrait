@@ -1,8 +1,9 @@
 package tech.kaffa.portrait.codegen
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import java.io.File
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -36,8 +37,8 @@ class ClasspathScannerTest {
         val result = ClasspathScanner(currentClasspath).scan()
 
         // Verify Result class structure
-        assertTrue(result.reflectives is Iterable<*>)
-        assertTrue(result.proxyTargets is Iterable<*>)
+        assertIs<Iterable<*>>(result.reflectives)
+        assertIs<Iterable<*>>(result.proxyTargets)
     }
 
     @Test
@@ -156,3 +157,4 @@ class ClasspathScannerTest {
         }
     }
 }
+

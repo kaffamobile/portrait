@@ -1,7 +1,7 @@
 package tech.kaffa.portrait.internal
 
 import kotlin.test.assertNull
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 
 class InternalPortraitProviderTest {
 
@@ -13,3 +13,4 @@ class InternalPortraitProviderTest {
         assertNull(result, "void arrays are not valid JVM class descriptors")
     }
 }
+

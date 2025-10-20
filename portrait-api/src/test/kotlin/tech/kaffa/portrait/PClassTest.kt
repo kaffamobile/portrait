@@ -3,7 +3,7 @@ package tech.kaffa.portrait
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import tech.kaffa.portrait.proxy.ProxyHandler
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -298,3 +298,4 @@ private class TestablePClass<T : Any>(
         throw UnsupportedOperationException("Proxy creation not supported for test stubs")
     }
 }
+

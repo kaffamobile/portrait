@@ -5,7 +5,7 @@ import io.github.classgraph.ScanResult
 import io.mockk.every
 import io.mockk.mockk
 import net.bytebuddy.dynamic.ClassFileLocator
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import java.io.File
 import java.lang.reflect.Modifier
 import kotlin.test.assertNotNull
@@ -162,3 +162,4 @@ class PortraitGeneratorTest {
         assertTrue(Modifier.isPrivate(generatePortraitMethod.modifiers))
     }
 }
+

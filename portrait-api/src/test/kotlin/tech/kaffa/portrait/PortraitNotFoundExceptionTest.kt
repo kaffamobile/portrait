@@ -1,7 +1,8 @@
 package tech.kaffa.portrait
 
-import org.junit.jupiter.api.Test
+import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 
@@ -39,9 +40,7 @@ class PortraitNotFoundExceptionTest {
     fun `PortraitNotFoundException is a RuntimeException`() {
         val exception = PortraitNotFoundException("test")
 
-        assert(exception is RuntimeException) {
-            "PortraitNotFoundException should extend RuntimeException"
-        }
+        assertIs<RuntimeException>(exception, "PortraitNotFoundException should extend RuntimeException")
     }
 
     @Test
