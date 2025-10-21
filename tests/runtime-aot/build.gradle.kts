@@ -114,13 +114,19 @@ val runPortraitTestsCodegen = tasks.register<JavaExec>("runPortraitTestsCodegen"
     dependsOn(compileFixtures, codegenProject.tasks.named("assemble"))
 
     mainClass.set("tech.kaffa.portrait.codegen.cli.PortraitKt")
+    classpath = codegenRuntimeClasspath
 
     doFirst {
-        classpath = codegenRuntimeClasspath
+        val input = configurations
+            .testRuntimeClasspath
+            .get()
+            .resolve()
+            .joinToString(File.pathSeparator) { it.absolutePath }
+
         args = listOf(
-            "--input", fixturesClassesDir.get().asFile.absolutePath,
+            "--input", input,
             "--output", generatedPortraitDir.get().asFile.absolutePath,
-            "--runtime=teavm"
+            "--teavm"
         )
     }
 }

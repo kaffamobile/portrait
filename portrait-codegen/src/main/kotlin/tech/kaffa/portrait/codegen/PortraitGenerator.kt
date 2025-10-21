@@ -2,6 +2,7 @@ package tech.kaffa.portrait.codegen
 
 import net.bytebuddy.ByteBuddy
 import net.bytebuddy.ClassFileVersion
+import net.bytebuddy.description.type.TypeDescription
 import net.bytebuddy.dynamic.ClassFileLocator
 import net.bytebuddy.dynamic.DynamicType
 import net.bytebuddy.pool.TypePool
@@ -40,6 +41,7 @@ class PortraitGenerator private constructor(
      */
     fun generate() {
         val generatedProxies = mutableMapOf<String, ProxyClassFactory.Result>()
+        val generatedPortraits = mutableSetOf<PortraitClassFactory.Result>()
 
         for (proxy in generateProxyClasses()) {
             generatedProxies[proxy.superType.name] = proxy
@@ -47,9 +49,8 @@ class PortraitGenerator private constructor(
             output.writeGeneratedClass(proxy)
         }
 
-        val generatedPortraits = generatePortraitClasses(generatedProxies).toList()
-
-        for (portrait in generatedPortraits) {
+        for (portrait in generatePortraitClasses(generatedProxies)) {
+            generatedPortraits.add(portrait)
             classpathMap.add(portrait.dynamicType)
             output.writeGeneratedClass(portrait)
         }
@@ -69,6 +70,7 @@ class PortraitGenerator private constructor(
                     return@mapNotNull null
                 }
                 try {
+                    logger.info("Generating proxy $className") // TODO REMOVE
                     val typeDescription = typePool.describe(className).resolve()
                     if (!typeDescription.isInterface) {
                         logger.debug("Skipping proxy generation for $className because it is not an interface")
@@ -100,7 +102,8 @@ class PortraitGenerator private constructor(
             }
     }
 
-    private fun generatePortraitProvider(generatedPortraits: List<PortraitClassFactory.Result>) {
+    private fun generatePortraitProvider(generatedPortraits: Set<PortraitClassFactory.Result>) {
+
         val providerFactory = GeneratedPortraitProviderFactory(byteBuddy, typePool)
         val providerResult = providerFactory.make(generatedPortraits)
 

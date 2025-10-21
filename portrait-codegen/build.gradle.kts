@@ -1,17 +1,21 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
+import tech.kaffa.portrait.codegen.build.TeavmClasslibRemappedJar
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.shadow)
     application
     `maven-publish`
+//    id("tech.kaffa.portrait.codegen.teavm-classlib")
 }
 
 repositories {
     mavenCentral()
 }
 
-val teavmClasslib: Configuration by configurations.creating
+val teavmClasslib: Configuration by configurations.creating {
+    isCanBeResolved = true
+}
 
 dependencies {
     implementation(project(":portrait-annotations"))
@@ -45,14 +49,13 @@ application {
 tasks {
     withType<Test> { useJUnitPlatform() }
 
-    val prepareTeavmClasslib by registering(ShadowJar::class) {
-        archiveFileName.set("teavm-classlib-all.jar")
-        configurations = listOf(teavmClasslib)
+    val teavmClasslibRemappedJar by registering(TeavmClasslibRemappedJar::class) {
+        sources.setFrom(teavmClasslib)
     }
 
     processResources {
-        dependsOn(prepareTeavmClasslib)
-        from(prepareTeavmClasslib.map { it.outputs }) {
+        dependsOn(teavmClasslibRemappedJar)
+        from(teavmClasslibRemappedJar.flatMap { it.archiveFile }) {
             into("META-INF/portrait")
         }
     }

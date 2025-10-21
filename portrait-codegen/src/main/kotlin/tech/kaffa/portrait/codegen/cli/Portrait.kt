@@ -1,16 +1,26 @@
 package tech.kaffa.portrait.codegen.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
+import com.github.ajalt.clikt.parameters.options.flag
 import com.github.ajalt.clikt.parameters.options.help
+import com.github.ajalt.clikt.parameters.options.multiple
 import com.github.ajalt.clikt.parameters.options.option
 import com.github.ajalt.clikt.parameters.options.required
+import com.github.ajalt.clikt.parameters.options.validate
 import com.github.ajalt.clikt.parameters.types.choice
 import com.github.ajalt.clikt.parameters.types.path
 import org.slf4j.LoggerFactory
 import tech.kaffa.portrait.codegen.ClasspathScanner
 import tech.kaffa.portrait.codegen.PortraitGenerator
 import tech.kaffa.portrait.codegen.PortraitGenerator.OutputType
+import tech.kaffa.portrait.codegen.utils.ClasslibConfiguration
+import tech.kaffa.portrait.codegen.utils.ClasslibLocatorFactory
+import java.io.File
 import kotlin.io.path.pathString
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.nio.file.StandardCopyOption
 
 /**
  * Portrait code generator CLI tool.
@@ -44,7 +54,6 @@ class Portrait : CliktCommand(
     """.trimMargin()
 
     private val input by option("--input", "-i")
-        .path(mustExist = true, canBeFile = true, canBeDir = true)
         .required()
         .help("Input classpath (directory or JAR) containing compiled classes to scan")
 
@@ -58,10 +67,29 @@ class Portrait : CliktCommand(
         .choice("jar", "folder", ignoreCase = true)
         .help("Output format: 'jar' or 'folder' (auto-detected from output path if not specified)")
 
+    private val classlibJars by option("--classlib-jar")
+        .path(mustExist = true, canBeFile = true, canBeDir = false)
+        .multiple()
+        .help("Jar file providing the target class library for resolution (repeatable)")
+
+    private val classlibDirs by option("--classlib-dir")
+        .path(mustExist = true, canBeFile = false, canBeDir = true)
+        .multiple()
+        .help("Directory containing class files that make up the target class library (repeatable)")
+
+    private val classlibJres by option("--classlib-jre")
+        .path(mustExist = true, canBeFile = false, canBeDir = true)
+        .multiple()
+        .help("Root directory of a JRE/JDK image to use as the target class library (repeatable)")
+
+    private val teaVm by option("--teavm")
+        .flag(default = false)
+        .help("Use the embedded TeaVM runtime class library for resolution")
+
     override fun run() {
         printSplash()
 
-        val classpath = input.pathString
+        val classpath = input
         val outputPath = output.pathString
 
         // Auto-detect OutputType from the output path if not specified
@@ -69,19 +97,59 @@ class Portrait : CliktCommand(
             ?.let { toOutputType(it) }
             ?: detectOutputType(outputPath)
 
+        val classlibConfig = buildClasslibConfiguration()
+        val classlibLocator = ClasslibLocatorFactory.create(classlibConfig)
+
         logger.info("Scanning classpath for Portrait annotations...")
-        val scanResult = ClasspathScanner(classpath).scan()
-        logger.info(
-            "Identified ${scanResult.reflectives.size} reflective classes and " +
-                    "${scanResult.proxyTargets.size} proxy targets."
+        ClasspathScanner(classpath, classlibLocator).scan().use { scanResult ->
+            logger.info(
+                "Identified ${scanResult.reflectives.size} reflective classes and " +
+                        "${scanResult.proxyTargets.size} proxy targets."
+            )
+
+            logger.info("Generating Portrait classes...")
+            PortraitGenerator
+                .forType(outputType, outputPath, scanResult)
+                .use { generator -> generator.generate() }
+
+            logger.info("Portrait code generation completed successfully")
+        }
+    }
+
+    private fun buildClasslibConfiguration(): ClasslibConfiguration {
+        val jarPaths = classlibJars.map { it.toAbsolutePath().normalize() }.toMutableList()
+        val dirPaths = classlibDirs.map { it.toAbsolutePath().normalize() }.toMutableList()
+        val jrePaths = classlibJres.map { it.toAbsolutePath().normalize() }.toMutableList()
+
+        if (teaVm) {
+            jarPaths.add(loadTeaVmClasslibJar())
+            logger.info("Using embedded TeaVM class library")
+        }
+
+        if (jarPaths.isEmpty() && dirPaths.isEmpty() && jrePaths.isEmpty()) {
+            val javaHome = Paths.get(System.getProperty("java.home")).toAbsolutePath().normalize()
+            logger.info("No class library specified. Falling back to current runtime at $javaHome")
+            jarPaths.add(javaHome)
+        }
+
+        return ClasslibConfiguration(
+            jarFiles = jarPaths.distinct(),
+            directories = dirPaths.distinct(),
+            jreHomes = jrePaths.distinct()
         )
+    }
 
-        logger.info("Generating Portrait classes...")
-        PortraitGenerator
-            .forType(outputType, outputPath, scanResult)
-            .generate()
+    private fun loadTeaVmClasslibJar(): Path {
+        val resourcePath = "/META-INF/portrait/teavm-classlib-remapped.jar"
+        val input = Portrait::class.java.getResourceAsStream(resourcePath)
+            ?: error("Embedded TeaVM class library not found at $resourcePath")
 
-        logger.info("Portrait code generation completed successfully")
+        val tempFile = Files.createTempFile("portrait-teavm-classlib", ".jar")
+        tempFile.toFile().deleteOnExit()
+        input.use {
+            Files.copy(it, tempFile, StandardCopyOption.REPLACE_EXISTING)
+        }
+        return tempFile.toAbsolutePath()
     }
 
     private fun detectOutputType(path: String): OutputType {

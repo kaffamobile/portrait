@@ -6,17 +6,24 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
+import tech.kaffa.portrait.codegen.utils.ClasslibConfiguration
+import tech.kaffa.portrait.codegen.utils.ClasslibLocatorFactory
+
+private fun newScanner(classpath: String): ClasspathScanner {
+    val locator = ClasslibLocatorFactory.create(ClasslibConfiguration.forCurrentRuntime())
+    return ClasspathScanner(classpath, locator)
+}
 
 class ClasspathScannerTest {
 
     @Test
     fun `ClasspathScanner can scan empty classpath`() {
         // Test with empty classpath - should not crash
-        val result = ClasspathScanner("").scan()
-
-        assertNotNull(result)
-        assertNotNull(result.reflectives)
-        assertNotNull(result.proxyTargets)
+        newScanner("").scan().use { result ->
+            assertNotNull(result)
+            assertNotNull(result.reflectives)
+            assertNotNull(result.proxyTargets)
+        }
     }
 
     @Test
@@ -24,21 +31,21 @@ class ClasspathScannerTest {
         // Use current classpath which should include test classes
         val currentClasspath = System.getProperty("java.class.path")
 
-        val result = ClasspathScanner(currentClasspath).scan()
-
-        assertNotNull(result)
-        assertNotNull(result.reflectives)
-        assertNotNull(result.proxyTargets)
+        newScanner(currentClasspath).scan().use { result ->
+            assertNotNull(result)
+            assertNotNull(result.reflectives)
+            assertNotNull(result.proxyTargets)
+        }
     }
 
     @Test
     fun `ClasspathScanner Result has correct structure`() {
         val currentClasspath = System.getProperty("java.class.path")
-        val result = ClasspathScanner(currentClasspath).scan()
-
-        // Verify Result class structure
-        assertIs<Iterable<*>>(result.reflectives)
-        assertIs<Iterable<*>>(result.proxyTargets)
+        newScanner(currentClasspath).scan().use { result ->
+            // Verify Result class structure
+            assertIs<Iterable<*>>(result.reflectives)
+            assertIs<Iterable<*>>(result.proxyTargets)
+        }
     }
 
     @Test
@@ -48,10 +55,10 @@ class ClasspathScannerTest {
         val currentClasspath = System.getProperty("java.class.path")
         val multipleClasspath = "$currentClasspath${separator}$currentClasspath"
 
-        val result = ClasspathScanner(multipleClasspath).scan()
-
-        assertNotNull(result)
-        // Should handle duplicate entries gracefully
+        newScanner(multipleClasspath).scan().use { result ->
+            assertNotNull(result)
+            // Should handle duplicate entries gracefully
+        }
     }
 
     @Test
@@ -62,25 +69,24 @@ class ClasspathScannerTest {
         val mixedClasspath = "$currentClasspath${separator}$invalidPath"
 
         // Should not crash even with invalid entries
-        val result = ClasspathScanner(mixedClasspath).scan()
-
-        assertNotNull(result)
+        newScanner(mixedClasspath).scan().use { result ->
+            assertNotNull(result)
+        }
     }
 
     @Test
     fun `ClasspathScanner can find test fixture classes`() {
-        val result = ClasspathScanner("").scan()
+        newScanner("").scan().use { result ->
+            val reflectiveClasses = result.reflectives.toList()
+            val proxyTargetClasses = result.proxyTargets.toList()
 
-        println(result)
-        val reflectiveClasses = result.reflectives.toList()
-        val proxyTargetClasses = result.proxyTargets.toList()
+            // Check if we can find our test fixture classes
 
-        // Check if we can find our test fixture classes
-
-        // Test fixtures should be found if they have the annotations
-        // This is dependent on the test fixture classes being properly annotated
-        assertTrue(reflectiveClasses.isNotEmpty()) // Either found or empty is ok for unit tests
-        assertTrue(proxyTargetClasses.isNotEmpty()) // Either found or empty is ok for unit tests
+            // Test fixtures should be found if they have the annotations
+            // This is dependent on the test fixture classes being properly annotated
+            assertTrue(reflectiveClasses.isNotEmpty()) // Either found or empty is ok for unit tests
+            assertTrue(proxyTargetClasses.isNotEmpty()) // Either found or empty is ok for unit tests
+        }
     }
 
     @Test
@@ -96,9 +102,9 @@ class ClasspathScannerTest {
 
         if (jarEntries.isNotEmpty()) {
             val jarClasspath = jarEntries.joinToString(separator)
-            val result = ClasspathScanner(jarClasspath).scan()
-
-            assertNotNull(result)
+            newScanner(jarClasspath).scan().use { result ->
+                assertNotNull(result)
+            }
         }
     }
 
@@ -114,34 +120,34 @@ class ClasspathScannerTest {
 
         if (directoryEntries.isNotEmpty()) {
             val directoryClasspath = directoryEntries.joinToString(separator)
-            val result = ClasspathScanner(directoryClasspath).scan()
-
-            assertNotNull(result)
+            newScanner(directoryClasspath).scan().use { result ->
+                assertNotNull(result)
+            }
         }
     }
 
     @Test
     fun `ClasspathScanner Result iterables are reusable`() {
         val currentClasspath = System.getProperty("java.class.path")
-        val result = ClasspathScanner(currentClasspath).scan()
+        newScanner(currentClasspath).scan().use { result ->
+            // Verify that iterables can be iterated multiple times
+            val firstIteration = result.reflectives.toList()
+            val secondIteration = result.reflectives.toList()
 
-        // Verify that iterables can be iterated multiple times
-        val firstIteration = result.reflectives.toList()
-        val secondIteration = result.reflectives.toList()
+            assertEquals(firstIteration.size, secondIteration.size)
 
-        assertEquals(firstIteration.size, secondIteration.size)
+            val firstProxyIteration = result.proxyTargets.toList()
+            val secondProxyIteration = result.proxyTargets.toList()
 
-        val firstProxyIteration = result.proxyTargets.toList()
-        val secondProxyIteration = result.proxyTargets.toList()
-
-        assertEquals(firstProxyIteration.size, secondProxyIteration.size)
+            assertEquals(firstProxyIteration.size, secondProxyIteration.size)
+        }
     }
 
     @Test
     fun `public api include options add related types`() {
         val currentClasspath = System.getProperty("java.class.path")
 
-        ClasspathScanner(currentClasspath).scan().use { result ->
+        newScanner(currentClasspath).scan().use { result ->
             val reflectiveNames = result.reflectives
 
             assertTrue("tech.kaffa.portrait.codegen.PublicApiSubtypeRoot" in reflectiveNames)
