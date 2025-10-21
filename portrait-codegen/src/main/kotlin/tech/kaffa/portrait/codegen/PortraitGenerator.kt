@@ -70,7 +70,6 @@ class PortraitGenerator private constructor(
                     return@mapNotNull null
                 }
                 try {
-                    logger.info("Generating proxy $className") // TODO REMOVE
                     val typeDescription = typePool.describe(className).resolve()
                     if (!typeDescription.isInterface) {
                         logger.debug("Skipping proxy generation for $className because it is not an interface")
@@ -112,12 +111,7 @@ class PortraitGenerator private constructor(
     }
 
     private fun shouldGeneratePortrait(className: String): Boolean {
-        if (className.isBlank()) return false
-        if (className in PRIMITIVE_NAMES) return false
-        if (className.endsWith("[]")) return false
-        // Allow synthetic nested classes and Kotlin companions (`$`), but ignore simple names without package.
-        if (!className.contains('.') && className !in PRIMITIVE_NAMES) return false
-        return true
+        return className.isNotBlank() && className !in PRIMITIVE_NAMES && !className.endsWith("[]")
     }
 
     enum class OutputType { JAR, FOLDER }

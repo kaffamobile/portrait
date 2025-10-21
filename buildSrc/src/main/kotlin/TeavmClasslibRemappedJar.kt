@@ -21,6 +21,7 @@ import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
+import org.objectweb.asm.tree.MethodNode
 
 @DisableCachingByDefault(because = "Task performs custom bytecode rewriting before archiving")
 abstract class TeavmClasslibRemappedJar @Inject constructor() : Jar() {
@@ -38,8 +39,10 @@ abstract class TeavmClasslibRemappedJar @Inject constructor() : Jar() {
         remappedClassesDir.convention(
             project.layout.buildDirectory.dir("generated/teavm/${name}/classes")
         )
-        from(remappedClassesDir)
-        doFirst { generateRemappedClasses() }
+        doFirst {
+            generateRemappedClasses()
+            from(remappedClassesDir)
+        }
     }
 
     private fun generateRemappedClasses() {
@@ -125,7 +128,7 @@ abstract class TeavmClasslibRemappedJar @Inject constructor() : Jar() {
         }
         val classNode = ClassNode()
         reader.accept(classNode, 0)
-        applySuperClassOverride(classNode)
+        applyTeaVmOverrides(classNode)
 
         val targetInternalName = remapper.map(classNode.name) ?: classNode.name
         val writer = ClassWriter(0)
@@ -165,6 +168,8 @@ private class TeaVmRemapper(
 }
 
 private const val TEAVM_SUPERCLASS_ANNOTATION = "Lorg/teavm/interop/Superclass;"
+private const val TEAVM_RENAME_ANNOTATION = "Lorg/teavm/interop/Rename;"
+private const val TEAVM_REMOVE_ANNOTATION = "Lorg/teavm/interop/Remove;"
 
 private class MappingRules {
     private val classMappings = mutableMapOf<String, String>()
@@ -262,6 +267,11 @@ private class MappingRules {
     }
 }
 
+private fun applyTeaVmOverrides(classNode: ClassNode) {
+    applySuperClassOverride(classNode)
+    applyMethodOverrides(classNode)
+}
+
 private fun applySuperClassOverride(classNode: ClassNode) {
     val annotation = (classNode.visibleAnnotations.orEmpty() + classNode.invisibleAnnotations.orEmpty())
         .firstOrNull { it.desc == TEAVM_SUPERCLASS_ANNOTATION }
@@ -270,6 +280,53 @@ private fun applySuperClassOverride(classNode: ClassNode) {
     val override = annotation.extractSuperclassValue() ?: return
     val internal = override.ifEmpty { null }
     classNode.superName = internal?.takeUnless { it == classNode.name }
+}
+
+private fun applyMethodOverrides(classNode: ClassNode) {
+    if (classNode.methods.isNullOrEmpty()) {
+        return
+    }
+    val methodsBySignature = linkedMapOf<String, MethodNode>()
+    for (method in classNode.methods) {
+        val annotations = method.collectAnnotations()
+        if (annotations.any { it.desc == TEAVM_REMOVE_ANNOTATION }) {
+            continue
+        }
+        val renameAnnotation = annotations.firstOrNull { it.desc == TEAVM_RENAME_ANNOTATION }
+        val renameValue = renameAnnotation?.extractRenameValue()
+        if (renameAnnotation != null) {
+            method.removeAnnotationDescriptor(TEAVM_RENAME_ANNOTATION)
+        }
+        if (!renameValue.isNullOrEmpty()) {
+            method.name = renameValue
+        }
+        val signature = method.name + method.desc
+        methodsBySignature[signature] = method
+    }
+    classNode.methods = methodsBySignature.values.toMutableList()
+}
+
+private fun MethodNode.collectAnnotations(): List<AnnotationNode> {
+    val visible = visibleAnnotations.orEmpty()
+    val invisible = invisibleAnnotations.orEmpty()
+    return when {
+        visible.isEmpty() -> invisible
+        invisible.isEmpty() -> visible
+        else -> visible + invisible
+    }
+}
+
+private fun MethodNode.removeAnnotationDescriptor(descriptor: String) {
+    visibleAnnotations = visibleAnnotations.removeAnnotationDescriptor(descriptor)
+    invisibleAnnotations = invisibleAnnotations.removeAnnotationDescriptor(descriptor)
+}
+
+private fun MutableList<AnnotationNode>?.removeAnnotationDescriptor(descriptor: String): MutableList<AnnotationNode>? {
+    if (this == null) {
+        return null
+    }
+    val filtered = this.filter { it.desc != descriptor }
+    return if (filtered.isEmpty()) null else filtered.toMutableList()
 }
 
 private fun AnnotationNode.extractSuperclassValue(): String? {
@@ -284,6 +341,15 @@ private fun AnnotationNode.extractSuperclassValue(): String? {
     } else {
         rawValue.replace('.', '/')
     }
+}
+
+private fun AnnotationNode.extractRenameValue(): String? {
+    val values = this.values ?: return null
+    val keyIndex = values.indexOf("value")
+    if (keyIndex < 0 || keyIndex + 1 >= values.size) {
+        return null
+    }
+    return values[keyIndex + 1] as? String
 }
 
 private data class PackageRule(
