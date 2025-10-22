@@ -1,7 +1,10 @@
+import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.isRegularFile
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.SourceSetContainer
+import org.gradle.api.tasks.compile.JavaCompile
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
@@ -19,17 +22,17 @@ kotlin {
 val fixturesProject = project(":tests")
 val codegenProject = project(":portrait-codegen")
 
-val generatedWrappersDir = layout.buildDirectory.dir("generated/teavmWrappers/kotlin")
+val generatedWrappersDir = layout.buildDirectory.dir("generated/teavmWrappers/java")
 val generatedPortraitDir = layout.buildDirectory.dir("generated/portrait-classes")
 
-sourceSets.test.get().kotlin.srcDir(generatedWrappersDir)
+sourceSets.test.get().java.srcDir(generatedWrappersDir)
 
 dependencies {
     testImplementation(testFixtures(project(":tests")))
     testImplementation(project(":portrait-api"))
-    testImplementation(libs.kotlin.test.junit)
+    testImplementation(libs.junit4)
     testImplementation(libs.teavm.junit)
-    testRuntimeOnly(project(":portrait-runtime-aot"))
+    testImplementation(project(":portrait-runtime-aot"))
     testRuntimeOnly(files(generatedPortraitDir))
 }
 
@@ -39,8 +42,8 @@ tasks {
         .named("testFixtures")
         .get()
 
-    val fixturesClassesDir = fixturesProject.layout.buildDirectory.dir("classes/kotlin/${testFixturesSourceSet.name}")
-    val compileFixtures = fixturesProject.tasks.named("compileTestFixturesKotlin")
+    val fixturesClassesDir = fixturesProject.layout.buildDirectory.dir("classes/java/${testFixturesSourceSet.name}")
+    val compileFixtures = fixturesProject.tasks.named("compileTestFixturesJava")
     val processFixtureResources = fixturesProject.tasks.named("processTestFixturesResources")
 
     val generateTeaVmWrappers by registering {
@@ -81,13 +84,14 @@ tasks {
                         val simpleName = relativeName.substringAfterLast('.')
                         val wrapperName = "${simpleName}_TeaVM"
 
-                        val packageBlock = if (packageName.isNotEmpty()) "package $packageName\n\n" else ""
+                        val packageBlock = if (packageName.isNotEmpty()) "package $packageName;\n\n" else ""
                         val source = """
-                        |${packageBlock}import org.junit.runner.RunWith
-                        |import org.teavm.junit.TeaVMTestRunner
+                        |${packageBlock}import org.junit.runner.RunWith;
+                        |import org.teavm.junit.TeaVMTestRunner;
                         |
-                        |@RunWith(TeaVMTestRunner::class)
-                        |class $wrapperName : $simpleName()
+                        |@RunWith(TeaVMTestRunner.class)
+                        |public class $wrapperName extends $simpleName {
+                        |}
                     """.trimMargin()
 
                         val targetDir = if (packageName.isNotEmpty()) {
@@ -96,13 +100,17 @@ tasks {
                             outDir
                         }
 
-                        targetDir.resolve("$wrapperName.kt").writeText(source)
+                        targetDir.resolve("$wrapperName.java").writeText(source)
                     }
             }
         }
     }
 
-    compileTestKotlin {
+    named<JavaCompile>("compileTestJava") {
+        dependsOn(generateTeaVmWrappers)
+    }
+
+    named<KotlinCompile>("compileTestKotlin") {
         dependsOn(generateTeaVmWrappers)
     }
 
