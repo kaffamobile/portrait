@@ -24,6 +24,10 @@ import org.objectweb.asm.commons.Remapper
 import org.objectweb.asm.tree.AnnotationNode
 import org.objectweb.asm.tree.ClassNode
 import org.objectweb.asm.tree.MethodNode
+import org.objectweb.asm.Handle
+import org.objectweb.asm.Opcodes
+import org.objectweb.asm.Type
+import org.objectweb.asm.tree.InvokeDynamicInsnNode
 
 /**
  * Gradle task that remaps TeaVM classlib classes according to mapping rules defined in `META-INF/teavm.properties` files.
@@ -152,8 +156,14 @@ abstract class TeaVmClasslibRemappingTask @Inject constructor() : DefaultTask() 
         try {
             when {
                 file.isDirectory -> processDirectory(remapper, file, jarOut, writtenClasses)
-                file.extension.equals("jar", ignoreCase = true) -> processJarFile(remapper, file, jarOut, writtenClasses)
-                else -> logger.debug("Skipping TeaVM remap input $file (unsupported type)")
+                file.extension.equals("jar", ignoreCase = true) -> processJarFile(
+                    remapper,
+                    file,
+                    jarOut,
+                    writtenClasses
+                )
+
+                else -> logger.debug("Skipping TeaVM remap input {} (unsupported type)", file)
             }
         } catch (e: Exception) {
             logger.error("Failed to process input file: $file", e)
@@ -241,10 +251,12 @@ abstract class TeaVmClasslibRemappingTask @Inject constructor() : DefaultTask() 
         val classNode = ClassNode()
         reader.accept(classNode, 0)
 
-        applyTeaVmAnnotations(classNode)
+        applySuperclassAnnotation(classNode)
+        applyMethodAnnotations(classNode)
+        remapInvokeDynamic(classNode, remapper)
 
         val remappedInternalName = remapper.map(classNode.name) ?: classNode.name
-        val writer = ClassWriter(0)
+        val writer = ClassWriter(ClassWriter.COMPUTE_MAXS)
         val classRemapper = ClassRemapper(writer, remapper)
         classNode.accept(classRemapper)
         val remappedBytes = writer.toByteArray()
@@ -269,21 +281,6 @@ abstract class TeaVmClasslibRemappingTask @Inject constructor() : DefaultTask() 
          */
         private const val REPRODUCIBLE_BUILD_TIMESTAMP = 0L
 
-
-        /**
-         * Applies TeaVM-specific annotation overrides to a class node.
-         *
-         * Processes:
-         * - `@Superclass` annotations to override the superclass
-         * - `@Rename` annotations to rename methods
-         * - `@Remove` annotations to remove methods
-         *
-         * @param classNode The ASM ClassNode to modify
-         */
-        private fun applyTeaVmAnnotations(classNode: ClassNode) {
-            applySuperclassAnnotation(classNode)
-            applyMethodAnnotations(classNode)
-        }
 
         /**
          * Applies the `@Superclass` annotation if present, overriding the class's superclass.
@@ -408,6 +405,82 @@ abstract class TeaVmClasslibRemappingTask @Inject constructor() : DefaultTask() 
                 return null
             }
             return values[keyIndex + 1] as? String
+        }
+
+        /**
+         * Remaps all class references inside invokedynamic instructions.
+         * ClassRemapper doesn't handle these properly, so we need to do it manually.
+         */
+        private fun remapInvokeDynamic(classNode: ClassNode, remapper: Remapper) {
+            for (method in classNode.methods) {
+                val instructions = method.instructions ?: continue
+
+                for (insn in instructions) {
+                    if (insn is InvokeDynamicInsnNode) {
+                        // Remap the descriptor
+                        insn.desc = remapper.mapMethodDesc(insn.desc)
+
+                        // Remap the bootstrap method handle
+                        insn.bsm = remapHandle(insn.bsm, remapper)
+
+                        // Remap bootstrap method arguments
+                        insn.bsmArgs = insn.bsmArgs.map { arg ->
+                            when (arg) {
+                                is Type -> remapType(arg, remapper)
+                                is Handle -> remapHandle(arg, remapper)
+                                else -> arg
+                            }
+                        }.toTypedArray()
+                    }
+                }
+            }
+        }
+
+        /**
+         * Remaps a Handle (method or field reference).
+         */
+        private fun remapHandle(handle: Handle, remapper: Remapper): Handle {
+            val owner = remapper.mapType(handle.owner)
+            val name = when (handle.tag) {
+                Opcodes.H_GETFIELD, Opcodes.H_GETSTATIC,
+                Opcodes.H_PUTFIELD, Opcodes.H_PUTSTATIC -> {
+                    remapper.mapFieldName(handle.owner, handle.name, handle.desc)
+                }
+
+                else -> {
+                    remapper.mapMethodName(handle.owner, handle.name, handle.desc)
+                }
+            }
+            val desc = when (handle.tag) {
+                Opcodes.H_GETFIELD, Opcodes.H_GETSTATIC,
+                Opcodes.H_PUTFIELD, Opcodes.H_PUTSTATIC -> {
+                    remapper.mapDesc(handle.desc)
+                }
+
+                else -> {
+                    remapper.mapMethodDesc(handle.desc)
+                }
+            }
+
+            return Handle(
+                handle.tag,
+                owner,
+                name,
+                desc,
+                handle.isInterface
+            )
+        }
+
+        /**
+         * Remaps a Type.
+         */
+        private fun remapType(type: Type, remapper: Remapper): Type {
+            return when (type.sort) {
+                Type.OBJECT -> Type.getObjectType(remapper.mapType(type.internalName))
+                Type.ARRAY -> Type.getType(remapper.mapDesc(type.descriptor))
+                Type.METHOD -> Type.getMethodType(remapper.mapMethodDesc(type.descriptor))
+                else -> type
+            }
         }
     }
 }
