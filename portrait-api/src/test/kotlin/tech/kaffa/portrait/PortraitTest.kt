@@ -1,89 +1,133 @@
 package tech.kaffa.portrait
 
-import io.mockk.every
-import io.mockk.mockk
+import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
-import tech.kaffa.portrait.provider.PortraitProvider
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class PortraitTest {
 
-    @Test
-    fun `Portrait of(Class) should delegate to provider`() {
-        val mockProvider = mockk<PortraitProvider>()
-        val mockPClass = mockk<PClass<TestClass>>()
-
-        every { mockProvider.priority() } returns 100
-        every { mockProvider.forName<TestClass>("tech.kaffa.portrait.TestClass") } returns mockPClass
-
-        // We can't easily mock the ServiceLoader, so this test verifies the general contract
-        // In real scenarios, this would be tested with integration tests
-
-        val clazz = TestClass::class.java
-        assertEquals("tech.kaffa.portrait.TestClass", clazz.name)
+    @BeforeTest
+    fun resetCache() {
+        Portrait.clearCache()
     }
 
     @Test
-    fun `Portrait of(KClass) should delegate to provider`() {
-        val kClass = TestClass::class
-        assertEquals("tech.kaffa.portrait.TestClass", kClass.java.name)
+    fun `Portrait of(Class) returns provider-backed class`() {
+        val portrait = Portrait.of(TestClass::class.java)
+        assertEquals(TestClass::class.java.name, portrait.qualifiedName)
     }
 
     @Test
-    fun `Portrait from(instance) should use instance class`() {
-        val instance = TestClass("test")
-        assertEquals("tech.kaffa.portrait.TestClass", instance.javaClass.name)
+    fun `Portrait of(KClass) returns provider-backed class`() {
+        val portrait = Portrait.of(TestClass::class)
+        assertEquals(TestClass::class.java.name, portrait.qualifiedName)
     }
 
     @Test
-    fun `Portrait forName should handle class name`() {
-        val className = "tech.kaffa.portrait.TestClass"
-        // This test verifies the method signature and basic behavior
-        assertFailsWith<RuntimeException> {
-            Portrait.forName(className)
+    fun `Portrait of(Class) throws when class is unknown`() {
+        assertFailsWith<PortraitNotFoundException> {
+            Portrait.of(UnknownTestClass::class.java)
         }
     }
 
     @Test
-    fun `Portrait should throw RuntimeException when no provider found`() {
-        // When no providers are available or none can handle the class
-        assertFailsWith<RuntimeException> {
-            Portrait.of(TestClass::class.java)
+    fun `Portrait ofOrNull returns null for unknown class`() {
+        val portrait = Portrait.ofOrNull(UnknownTestClass::class.java)
+        assertNull(portrait)
+    }
+
+    @Test
+    fun `Portrait ofOrUnresolved returns sentinel for unknown class`() {
+        val portrait = Portrait.ofOrUnresolved(UnknownTestClass::class.java)
+        assertTrue(Portrait.isUnresolved(portrait))
+        assertEquals(UnknownTestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait ofOrNull returns provider result when available`() {
+        val portrait = Portrait.ofOrNull(TestClass::class.java)
+        assertNotNull(portrait)
+        assertEquals(TestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait ofOrNull with KClass returns null for unknown class`() {
+        val portrait = Portrait.ofOrNull(UnknownTestClass::class)
+        assertNull(portrait)
+    }
+
+    @Test
+    fun `Portrait ofOrUnresolved with KClass returns sentinel for unknown class`() {
+        val portrait = Portrait.ofOrUnresolved(UnknownTestClass::class)
+        assertTrue(Portrait.isUnresolved(portrait))
+        assertEquals(UnknownTestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait from delegates to instance type`() {
+        val instance = TestClass("value")
+        val portrait = Portrait.from(instance)
+        assertEquals(TestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait from throws when instance type unknown`() {
+        assertFailsWith<PortraitNotFoundException> {
+            Portrait.from(UnknownTestClass("value"))
         }
     }
 
     @Test
-    fun `Portrait should throw RuntimeException for unknown class name`() {
-        assertFailsWith<RuntimeException> {
+    fun `Portrait fromOrNull returns null when instance type unknown`() {
+        val portrait = Portrait.fromOrNull(UnknownTestClass("value"))
+        assertNull(portrait)
+    }
+
+    @Test
+    fun `Portrait fromOrUnresolved returns sentinel when instance type unknown`() {
+        val portrait = Portrait.fromOrUnresolved(UnknownTestClass("value"))
+        assertTrue(Portrait.isUnresolved(portrait))
+        assertEquals(UnknownTestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait forName returns provider-backed class`() {
+        val portrait = Portrait.forName(TestClass::class.java.name)
+        assertEquals(TestClass::class.java.name, portrait.qualifiedName)
+    }
+
+    @Test
+    fun `Portrait forName throws for unknown class`() {
+        assertFailsWith<PortraitNotFoundException> {
             Portrait.forName("unknown.class.Name")
         }
     }
 
     @Test
-    fun `Portrait forNameOrUnresolved should return UnresolvedPClass for unknown class name`() {
-        val result = Portrait.forNameOrUnresolved("unknown.class.Name")
-        assertNotNull(result)
-        assertTrue(Portrait.isUnresolved(result))
-        assertEquals("unknown.class.Name", result.qualifiedName)
+    fun `Portrait forNameOrNull returns null for unknown class`() {
+        val portrait = Portrait.forNameOrNull("unknown.class.Name")
+        assertNull(portrait)
     }
 
     @Test
-    fun `Portrait should throw RuntimeException when no providers available`() {
-        // This would be tested by manipulating the ServiceLoader, 
-        // which is complex in unit tests but important for integration tests
-        assertFailsWith<RuntimeException> {
-            Portrait.of(TestClass::class.java)
-        }
+    fun `Portrait forNameOrUnresolved returns sentinel for unknown class`() {
+        val portrait = Portrait.forNameOrUnresolved("unknown.class.Name")
+        assertTrue(Portrait.isUnresolved(portrait))
+        assertEquals("unknown.class.Name", portrait.qualifiedName)
     }
 
     @Test
-    fun `Portrait methods should handle null returns from providers gracefully`() {
-        // Test that when providers return null, Portrait handles it correctly
-        assertFailsWith<RuntimeException> {
-            Portrait.of(TestClass::class.java)
-        }
+    fun `Portrait cache returns same instance for repeated lookups`() {
+        val first = Portrait.of(TestClass::class.java)
+        val second = Portrait.of(TestClass::class.java)
+        assertSame(first, second)
     }
 }
+
+class UnknownTestClass(private val value: String)
+

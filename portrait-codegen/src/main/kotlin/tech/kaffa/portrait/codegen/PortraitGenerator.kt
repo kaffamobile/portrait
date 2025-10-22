@@ -64,10 +64,6 @@ class PortraitGenerator private constructor(
 
         return scan.proxyTargets.asSequence()
             .mapNotNull { className ->
-                if (!shouldGeneratePortrait(className)) {
-                    logger.debug("Skipping proxy generation for $className due to package restrictions")
-                    return@mapNotNull null
-                }
                 try {
                     val typeDescription = typePool.describe(className).resolve()
                     if (!typeDescription.isPublic) {
@@ -92,7 +88,6 @@ class PortraitGenerator private constructor(
         val factory = PortraitClassFactory(byteBuddy, typePool, generatedProxies)
 
         return (scan.proxyTargets + scan.reflectives).asSequence()
-            .filter { shouldGeneratePortrait(it) }
             .mapNotNull { className ->
                 try {
                     val typeDescription = typePool.describe(className).resolve()
@@ -110,7 +105,6 @@ class PortraitGenerator private constructor(
     }
 
     private fun generatePortraitProvider(generatedPortraits: Set<PortraitClassFactory.Result>) {
-
         val providerFactory = GeneratedPortraitProviderFactory(byteBuddy, typePool)
         val providerResult = providerFactory.make(generatedPortraits)
 
@@ -118,56 +112,35 @@ class PortraitGenerator private constructor(
         output.writeServiceProviderEntry(providerResult.providerClassName)
     }
 
-    private fun shouldGeneratePortrait(className: String): Boolean {
-        return className.isNotBlank() && className !in PRIMITIVE_NAMES && !className.endsWith("[]")
-    }
-
     enum class OutputType { JAR, FOLDER }
 
     companion object {
-
         private val logger = LoggerFactory.getLogger(PortraitGenerator::class.java)
 
         /**
          * Construct a [PortraitGenerator] that writes to a JAR at [outputPath].
          * Remember to call [close] (or use Kotlin's `use {}`) after [generate].
          */
-        fun forJar(
-            outputPath: String,
-            scan: ClasspathScanner.Result
-        ): PortraitGenerator {
-            val jarFile = File(outputPath)
-            return PortraitGenerator(JarOutputTarget(jarFile, logger), scan)
+        fun forJar(outputPath: String, scan: ClasspathScanner.Result): PortraitGenerator {
+            return PortraitGenerator(JarOutputTarget(File(outputPath), logger), scan)
         }
 
         /**
          * Construct a [PortraitGenerator] that writes class files into the folder at [outputPath].
          * Remember to call [close] (or use Kotlin's `use {}`) after [generate].
          */
-        fun forFolder(
-            outputPath: String,
-            scan: ClasspathScanner.Result
-        ): PortraitGenerator {
-            val outputDir = File(outputPath)
-            return PortraitGenerator(DirectoryOutputTarget(outputDir, logger), scan)
+        fun forFolder(outputPath: String, scan: ClasspathScanner.Result): PortraitGenerator {
+            return PortraitGenerator(DirectoryOutputTarget(File(outputPath), logger), scan)
         }
 
         /**
          * Generic factory that selects the output implementation by [type].
          */
-        fun forType(
-            type: OutputType,
-            outputPath: String,
-            scan: ClasspathScanner.Result
-        ): PortraitGenerator {
+        fun forType(type: OutputType, outputPath: String, scan: ClasspathScanner.Result): PortraitGenerator {
             return when (type) {
                 OutputType.JAR -> forJar(outputPath, scan)
                 OutputType.FOLDER -> forFolder(outputPath, scan)
             }
         }
-
-        private val PRIMITIVE_NAMES = setOf(
-            "boolean", "byte", "char", "short", "int", "long", "float", "double", "void"
-        )
     }
 }

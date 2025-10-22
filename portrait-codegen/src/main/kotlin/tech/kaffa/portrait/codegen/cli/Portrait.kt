@@ -92,6 +92,10 @@ class Portrait : CliktCommand(
         .flag(default = false)
         .help("Include the embedded TeaVM runtime class library")
 
+    private val verbose by option("--verbose", "-v")
+        .flag(default = false)
+        .help("Print all discovered reflective classes and proxy targets")
+
 
     override fun run() {
         printSplash()
@@ -103,10 +107,28 @@ class Portrait : CliktCommand(
 
         logger.info("Scanning classpath for Portrait annotations...")
         ClasspathScanner(input, classlib).scan().use { scanResult ->
+            val reflectiveCount = scanResult.reflectives.size
+            val proxyTargetCount = scanResult.proxyTargets.size
             logger.info(
-                "Identified ${scanResult.reflectives.size} reflective classes and " +
-                        "${scanResult.proxyTargets.size} proxy targets."
+                "Identified ${pluralize(reflectiveCount, "reflective class", "reflective classes")} " +
+                        "and ${pluralize(proxyTargetCount, "proxy target")}."
             )
+
+            if (verbose) {
+                if (scanResult.reflectives.isEmpty()) {
+                    logger.info("Reflective classes: (none)")
+                } else {
+                    logger.info("Reflective classes:")
+                    scanResult.reflectives.sorted().forEach { logger.info(" - $it") }
+                }
+
+                if (scanResult.proxyTargets.isEmpty()) {
+                    logger.info("Proxy targets: (none)")
+                } else {
+                    logger.info("Proxy targets:")
+                    scanResult.proxyTargets.sorted().forEach { logger.info(" - $it") }
+                }
+            }
 
             logger.info("Generating Portrait classes...")
             PortraitGenerator
@@ -172,6 +194,10 @@ class Portrait : CliktCommand(
             "folder" -> OutputType.FOLDER
             else -> error("Unsupported output type: $choice")
         }
+    }
+
+    private fun pluralize(count: Int, singular: String, plural: String = "${singular}s"): String {
+        return if (count == 1) "1 $singular" else "$count $plural"
     }
 
     private fun printSplash() {

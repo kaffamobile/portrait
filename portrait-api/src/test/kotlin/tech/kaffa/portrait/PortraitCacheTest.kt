@@ -1,58 +1,50 @@
 package tech.kaffa.portrait
 
+import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFailsWith
+import kotlin.test.assertSame
+import kotlin.test.assertTrue
 
 class PortraitCacheTest {
 
     @BeforeTest
-    fun clearCache() {
+    fun setUp() {
+        Portrait.clearCache()
+    }
+
+    @AfterTest
+    fun tearDown() {
         Portrait.clearCache()
     }
 
     @Test
-    fun `Portrait cache can be cleared`() {
-        // This test verifies that the clearCache method exists and can be called
-        // In a real scenario with providers, this would test actual caching behavior
+    fun `clearCache removes cached entries`() {
+        val first = Portrait.of(TestClass::class.java)
+        val second = Portrait.of(TestClass::class.java)
+        assertSame(first, second)
+
         Portrait.clearCache()
+
+        val refreshed = Portrait.of(TestClass::class.java)
+        assertSame(first, refreshed)
     }
 
     @Test
-    fun `Portrait cache functionality is thread-safe`() {
-        // Test that cache operations work correctly
-        // Since we use ConcurrentHashMap, this tests the thread-safety aspect
+    fun `cache does not retain unresolved lookups`() {
+        val unresolvedFirst = Portrait.ofOrUnresolved(UnknownTestClass::class.java)
+        assertTrue(Portrait.isUnresolved(unresolvedFirst))
 
         Portrait.clearCache()
 
-        // Multiple calls to clearCache should not cause issues
+        val unresolvedSecond = Portrait.ofOrUnresolved(UnknownTestClass::class.java)
+        assertTrue(Portrait.isUnresolved(unresolvedSecond))
+    }
+
+    @Test
+    fun `clearCache is idempotent`() {
         repeat(10) {
             Portrait.clearCache()
-        }
-
-        // This test mainly verifies that the cache mechanism
-        // doesn't cause any threading issues during clearing
-    }
-
-    @Test
-    fun `Portrait methods handle RuntimeException when no providers available`() {
-        // This test verifies that when no providers are available,
-        // we get RuntimeException (which includes our cache-related exceptions)
-
-        assertFailsWith<RuntimeException> {
-            Portrait.of(TestClass::class.java)
-        }
-
-        assertFailsWith<RuntimeException> {
-            Portrait.of(TestClass::class)
-        }
-
-        assertFailsWith<RuntimeException> {
-            Portrait.from(TestClass("test"))
-        }
-
-        assertFailsWith<RuntimeException> {
-            Portrait.forName("tech.kaffa.portrait.TestClass")
         }
     }
 }

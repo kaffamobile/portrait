@@ -60,10 +60,60 @@ object Portrait {
             ?: throw PortraitNotFoundException("Cannot create portrait for known Java class: ${clazz.name}")
     }
 
+    /**
+     * Attempts to create a [PClass] from a Java [Class], returning an unresolved placeholder if the
+     * type cannot be provided by the available [PortraitProvider]s.
+     *
+     * Use this variant when you need to continue operating even if reflection data is missing.
+     *
+     * @param clazz Java class to wrap
+     * @return A resolved [PClass] or an [UnresolvedPClass] sentinel
+     */
+    @JvmStatic
+    fun <T : Any> ofOrUnresolved(clazz: Class<T>): PClass<T> {
+        return load(clazz.name) ?: UnresolvedPClass(clazz.name)
+    }
+
+    /**
+     * Attempts to create a [PClass] from a Java [Class], returning `null` when no provider can
+     * handle the class. Unlike [of], this does not throw.
+     *
+     * @param clazz Java class to wrap
+     * @return A resolved [PClass] or `null` when unavailable
+     */
+    @JvmStatic
+    fun <T : Any> ofOrNull(clazz: Class<T>): PClass<T>? {
+        return load(clazz.name)
+    }
+
     @JvmStatic
     fun <T : Any> of(clazz: KClass<T>): PClass<T> {
         return load(clazz.java.name)
             ?: throw PortraitNotFoundException("Cannot create portrait for known Kotlin class: ${clazz.java.name}")
+    }
+
+    /**
+     * Attempts to create a [PClass] from a Kotlin [KClass], returning an unresolved placeholder if
+     * the type cannot be provided by the available [PortraitProvider]s.
+     *
+     * @param clazz Kotlin class to wrap
+     * @return A resolved [PClass] or an [UnresolvedPClass] sentinel
+     */
+    @JvmStatic
+    fun <T : Any> ofOrUnresolved(clazz: KClass<T>): PClass<T> {
+        return load(clazz.java.name) ?: UnresolvedPClass(clazz.java.name)
+    }
+
+    /**
+     * Attempts to create a [PClass] from a Kotlin [KClass], returning `null` when no provider can
+     * handle the class. Unlike [of], this does not throw.
+     *
+     * @param clazz Kotlin class to wrap
+     * @return A resolved [PClass] or `null` when unavailable
+     */
+    @JvmStatic
+    fun <T : Any> ofOrNull(clazz: KClass<T>): PClass<T>? {
+        return load(clazz.java.name)
     }
 
 
@@ -82,6 +132,30 @@ object Portrait {
     }
 
     /**
+     * Attempts to create a [PClass] from an instance, returning an unresolved placeholder if the
+     * runtime type cannot be provided by the available [PortraitProvider]s.
+     *
+     * @param instance Instance whose runtime type should be wrapped
+     * @return A resolved [PClass] or an [UnresolvedPClass] sentinel
+     */
+    @JvmStatic
+    fun <T : Any> fromOrUnresolved(instance: T): PClass<T> {
+        return load(instance.javaClass.name) ?: UnresolvedPClass(instance.javaClass.name)
+    }
+
+    /**
+     * Attempts to create a [PClass] from an instance, returning `null` when no provider can handle
+     * the runtime type.
+     *
+     * @param instance Instance whose runtime type should be wrapped
+     * @return A resolved [PClass] or `null` when unavailable
+     */
+    @JvmStatic
+    fun <T : Any> fromOrNull(instance: T): PClass<T>? {
+        return load(instance.javaClass.name)
+    }
+
+    /**
      * Creates a PClass by looking up a class name.
      *
      * @param className The fully qualified class name to load
@@ -92,6 +166,18 @@ object Portrait {
     fun forName(className: String): PClass<*> {
         return load<Any>(className)
             ?: throw PortraitNotFoundException("Cannot find class by name: $className")
+    }
+
+    /**
+     * Attempts to create a [PClass] by class name, returning `null` if no provider can resolve it.
+     * Unlike [forName], this does not throw when the class cannot be found.
+     *
+     * @param className Fully qualified class name to resolve
+     * @return A resolved [PClass] or `null` when unavailable
+     */
+    @JvmStatic
+    fun forNameOrNull(className: String): PClass<*>? {
+        return load<Any>(className)
     }
 
     /**

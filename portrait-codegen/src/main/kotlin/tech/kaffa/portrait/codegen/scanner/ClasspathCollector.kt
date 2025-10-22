@@ -15,7 +15,11 @@ abstract class ClasspathCollector(
 
     /** Add a discovered type name to this collector's set. */
     open fun addName(name: String) {
-        collectedNames.add(name)
+        val normalized = name.trim()
+        if (normalized.isEmpty()) return
+        if (normalized in PRIMITIVE_NAMES) return
+        if (normalized.endsWith("[]")) return
+        collectedNames.add(normalized)
     }
 
     /** Add direct subtypes according to collector semantics. */
