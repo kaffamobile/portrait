@@ -24,7 +24,7 @@ class StaticPClass<T : Any>(
     private val staticPortrait: StaticPortrait<T>
 ) : PClass<T>(), ProxyMethodIndexer {
 
-    private val classEntry: PClassEntry by lazy {
+    val classEntry: PClassEntry by lazy {
         MetadataDeserializer().deserialize(staticPortrait.metadata)
     }
 
@@ -80,7 +80,7 @@ class StaticPClass<T : Any>(
                 if (arg == null) {
                     !paramType.isPrimitive
                 } else {
-                    val argType = Portrait.from(arg)
+                    val argType = Portrait.forNameOrUnresolved(arg.javaClass.name)
                     paramType.isAssignableFrom(argType)
                 }
             }

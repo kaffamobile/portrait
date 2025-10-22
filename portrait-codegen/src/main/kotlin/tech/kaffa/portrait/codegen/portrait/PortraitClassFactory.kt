@@ -43,7 +43,7 @@ class PortraitClassFactory(
     private fun generatedClassName(superType: TypeDescription): String {
         val originalName = superType.name
         return if (originalName.startsWith("java.")) {
-            "tech.kaffa.portrait.generated.jdk.$originalName\$Portrait"
+            "tech.kaffa.portrait.generated.jdk.${originalName}Portrait"
         } else {
             "$originalName\$Portrait"
         }

@@ -151,6 +151,7 @@ object Portrait {
             return null
 
         } catch (e: Exception) {
+            e.printStackTrace()
             // Remove loading marker on error
             cache.remove(className)
             throw e
@@ -229,5 +230,9 @@ object Portrait {
                     throw RuntimeException("No PortraitProvider implementation found on classpath")
                 }
             }
+    }
+
+    fun debug() {
+        println(providers)
     }
 }
