@@ -1,0 +1,118 @@
+name: Build and Publish
+
+on:
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg2
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor --yes -o /usr/share/keyrings/google-chrome.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build
+        run: ./gradlew build
+
+  publish:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+          cache: gradle
+
+      - name: Install Google Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget gnupg2
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor --yes -o /usr/share/keyrings/google-chrome.gpg
+          echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] http://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list > /dev/null
+          sudo apt-get update
+          sudo apt-get install -y google-chrome-stable
+
+      - name: Make Gradle executable
+        run: chmod +x gradlew
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Configure Gradle for GitHub Packages
+        run: |
+          mkdir -p ~/.gradle/init.d
+          cat <<'EOF' > ~/.gradle/init.d/github-packages.gradle.kts
+          import org.gradle.api.publish.PublishingExtension
+          import org.gradle.kotlin.dsl.configure
+          import org.gradle.kotlin.dsl.maven
+
+          val repository = System.getenv("GITHUB_REPOSITORY")
+          val actor = System.getenv("GITHUB_ACTOR")
+          val token = System.getenv("GITHUB_TOKEN")
+
+          if (!repository.isNullOrBlank() && !actor.isNullOrBlank() && !token.isNullOrBlank()) {
+              allprojects {
+                  plugins.withId("maven-publish") {
+                      extensions.configure<PublishingExtension>("publishing") {
+                          repositories {
+                              maven {
+                                  name = "GitHubPackages"
+                                  url = uri("https://maven.pkg.github.com/$repository")
+                                  credentials {
+                                      username = actor
+                                      password = token
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+          EOF
+
+      - name: Publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./gradlew build publish
