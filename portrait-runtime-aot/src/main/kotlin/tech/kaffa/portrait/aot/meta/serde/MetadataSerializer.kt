@@ -7,72 +7,71 @@ import tech.kaffa.portrait.aot.meta.PFieldEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
-import java.util.*
+import java.util.Base64
 
 class MetadataSerializer {
-    private val stringPool = StringPool()
 
     fun serialize(clazz: PClassEntry): String {
+        val stringPool = StringPool()
+        collectClassStrings(stringPool, clazz)
+
+        val strings = stringPool.getStrings()
+        val stringIndexWidth = IntWidth.forUpperBound(strings.size - 1)
+
         val output = ByteArrayOutputStream()
         val data = DataOutputStream(output)
 
-        // First pass: collect all strings
-        collectClassStrings(clazz)
+        data.writeShort(VERSION)
+        data.writeByte(stringIndexWidth.id)
+        stringIndexWidth.write(data, strings.size)
 
-        // Write header
-        data.writeInt(MAGIC_NUMBER)
-        data.writeInt(VERSION)
+        strings.forEach { data.writeUTF(it) }
 
-        // Write string pool
-        writeStringPool(data)
+        val context = EncodingContext(stringPool, stringIndexWidth)
+        writeClass(data, clazz, context)
 
-        // Write single class
-        writeClass(data, clazz)
-
-        // Convert to Base64 string
         return Base64.getEncoder().encodeToString(output.toByteArray())
     }
 
-
-    private fun collectClassStrings(clazz: PClassEntry) {
+    private fun collectClassStrings(stringPool: StringPool, clazz: PClassEntry) {
         stringPool.intern(clazz.simpleName)
         stringPool.intern(clazz.qualifiedName)
         stringPool.intern(clazz.javaClassName)
         clazz.superclassName?.let { stringPool.intern(it) }
         clazz.interfaceNames.forEach { stringPool.intern(it) }
 
-        clazz.annotations.forEach { collectAnnotationStrings(it) }
-        clazz.constructors.forEach { collectConstructorStrings(it) }
-        clazz.declaredMethods.forEach { collectMethodStrings(it) }
-        clazz.declaredFields.forEach { collectFieldStrings(it) }
-        clazz.proxyMethods.forEach { collectMethodStrings(it) }
+        clazz.annotations.forEach { collectAnnotationStrings(stringPool, it) }
+        clazz.constructors.forEach { collectConstructorStrings(stringPool, it) }
+        clazz.declaredMethods.forEach { collectMethodStrings(stringPool, it) }
+        clazz.declaredFields.forEach { collectFieldStrings(stringPool, it) }
+        clazz.proxyMethods.forEach { collectMethodStrings(stringPool, it) }
     }
 
-    private fun collectConstructorStrings(constructor: PConstructorEntry) {
+    private fun collectConstructorStrings(stringPool: StringPool, constructor: PConstructorEntry) {
         stringPool.intern(constructor.declaringClassName)
         constructor.parameterTypeNames.forEach { stringPool.intern(it) }
-        constructor.annotations.forEach { collectAnnotationStrings(it) }
+        constructor.annotations.forEach { collectAnnotationStrings(stringPool, it) }
     }
 
-    private fun collectFieldStrings(field: PFieldEntry) {
+    private fun collectFieldStrings(stringPool: StringPool, field: PFieldEntry) {
         stringPool.intern(field.name)
         stringPool.intern(field.typeName)
         stringPool.intern(field.declaringClassName)
-        field.annotations.forEach { collectAnnotationStrings(it) }
+        field.annotations.forEach { collectAnnotationStrings(stringPool, it) }
     }
 
-    private fun collectMethodStrings(method: PMethodEntry) {
+    private fun collectMethodStrings(stringPool: StringPool, method: PMethodEntry) {
         stringPool.intern(method.name)
         method.parameterTypeNames.forEach { stringPool.intern(it) }
         stringPool.intern(method.returnTypeName)
         stringPool.intern(method.declaringClassName)
-        method.annotations.forEach { collectAnnotationStrings(it) }
+        method.annotations.forEach { collectAnnotationStrings(stringPool, it) }
         method.parameterAnnotations.forEach { annotations ->
-            annotations.forEach { collectAnnotationStrings(it) }
+            annotations.forEach { collectAnnotationStrings(stringPool, it) }
         }
     }
 
-    private fun collectAnnotationStrings(annotation: PAnnotationEntry) {
+    private fun collectAnnotationStrings(stringPool: StringPool, annotation: PAnnotationEntry) {
         stringPool.intern(annotation.annotationClassName)
         stringPool.intern(annotation.simpleName)
         annotation.qualifiedName?.let { stringPool.intern(it) }
@@ -87,142 +86,170 @@ class MetadataSerializer {
         }
     }
 
-    private fun writeStringPool(data: DataOutputStream) {
-        val strings = stringPool.getStrings()
-        data.writeInt(strings.size)
-        strings.forEach { data.writeUTF(it) }
+    private fun writeClass(
+        data: DataOutputStream,
+        clazz: PClassEntry,
+        context: EncodingContext
+    ) {
+        context.writeIndex(data, clazz.simpleName)
+        context.writeIndex(data, clazz.qualifiedName)
+
+        val collectionWidth = IntWidth.forUpperBound(
+            maxOf(
+                clazz.interfaceNames.size,
+                clazz.constructors.size,
+                clazz.declaredMethods.size,
+                clazz.declaredFields.size
+            )
+        )
+
+        val flags = buildClassFlags(clazz, collectionWidth)
+        data.writeByte(flags)
+
+        context.writeIndex(data, clazz.javaClassName)
+        if (clazz.superclassName != null) {
+            context.writeIndex(data, clazz.superclassName)
+        }
+
+        collectionWidth.write(data, clazz.interfaceNames.size)
+        clazz.interfaceNames.forEach { context.writeIndex(data, it) }
+
+        writeAnnotations(data, clazz.annotations, context)
+
+        collectionWidth.write(data, clazz.constructors.size)
+        clazz.constructors.forEach { writeConstructor(data, it, context) }
+
+        collectionWidth.write(data, clazz.declaredMethods.size)
+        clazz.declaredMethods.forEach { writeMethod(data, it, context) }
+
+        collectionWidth.write(data, clazz.declaredFields.size)
+        clazz.declaredFields.forEach { writeField(data, it, context) }
+
+        if (clazz.proxyMethods.isNotEmpty()) {
+            data.writeInt(clazz.proxyMethods.size)
+            clazz.proxyMethods.forEach { writeMethod(data, it, context) }
+        }
+
     }
 
-    private fun writeClass(data: DataOutputStream, clazz: PClassEntry) {
-        data.writeInt(stringPool.intern(clazz.simpleName))
-        data.writeInt(stringPool.intern(clazz.qualifiedName))
-        data.writeInt(buildClassFlags(clazz))
-        data.writeInt(stringPool.intern(clazz.javaClassName))
-        data.writeInt(clazz.superclassName?.let { stringPool.intern(it) } ?: -1)
+    private fun writeConstructor(
+        data: DataOutputStream,
+        constructor: PConstructorEntry,
+        context: EncodingContext
+    ) {
+        context.writeIndex(data, constructor.declaringClassName)
 
-        // Interface names
-        data.writeInt(clazz.interfaceNames.size)
-        clazz.interfaceNames.forEach { data.writeInt(stringPool.intern(it)) }
+        val parameterWidth = IntWidth.forUpperBound(constructor.parameterTypeNames.size)
+        data.writeByte(parameterWidth.id)
+        parameterWidth.write(data, constructor.parameterTypeNames.size)
+        constructor.parameterTypeNames.forEach { context.writeIndex(data, it) }
 
-        // Annotations
-        writeAnnotations(data, clazz.annotations)
-
-        // Constructors
-        data.writeInt(clazz.constructors.size)
-        clazz.constructors.forEach { writeConstructor(data, it) }
-
-        // Methods
-        data.writeInt(clazz.declaredMethods.size)
-        clazz.declaredMethods.forEach { writeMethod(data, it) }
-
-        // Proxy methods
-        data.writeInt(clazz.proxyMethods.size)
-        clazz.proxyMethods.forEach { writeMethod(data, it) }
-
-        // Fields
-        data.writeInt(clazz.declaredFields.size)
-        clazz.declaredFields.forEach { writeField(data, it) }
+        writeAnnotations(data, constructor.annotations, context)
     }
 
-    private fun writeConstructor(data: DataOutputStream, constructor: PConstructorEntry) {
-        data.writeInt(stringPool.intern(constructor.declaringClassName))
-        data.writeInt(0)
+    private fun writeField(
+        data: DataOutputStream,
+        field: PFieldEntry,
+        context: EncodingContext
+    ) {
+        context.writeIndex(data, field.name)
+        context.writeIndex(data, field.typeName)
+        context.writeIndex(data, field.declaringClassName)
+        data.writeByte(buildFieldFlags(field))
 
-        // Parameter types
-        data.writeInt(constructor.parameterTypeNames.size)
-        constructor.parameterTypeNames.forEach { data.writeInt(stringPool.intern(it)) }
-
-        writeAnnotations(data, constructor.annotations)
+        writeAnnotations(data, field.annotations, context)
     }
 
-    private fun writeField(data: DataOutputStream, field: PFieldEntry) {
-        data.writeInt(stringPool.intern(field.name))
-        data.writeInt(stringPool.intern(field.typeName))
-        data.writeInt(stringPool.intern(field.declaringClassName))
-        data.writeInt(buildFieldFlags(field))
+    private fun writeMethod(
+        data: DataOutputStream,
+        method: PMethodEntry,
+        context: EncodingContext
+    ) {
+        context.writeIndex(data, method.name)
+        context.writeIndex(data, method.returnTypeName)
+        context.writeIndex(data, method.declaringClassName)
 
-        writeAnnotations(data, field.annotations)
-    }
+        val parameterWidth = IntWidth.forUpperBound(
+            maxOf(
+                method.parameterTypeNames.size,
+                method.parameterAnnotations.size
+            )
+        )
+        data.writeByte(buildMethodFlags(method, parameterWidth))
 
-    private fun writeMethod(data: DataOutputStream, method: PMethodEntry) {
-        data.writeInt(stringPool.intern(method.name))
-        data.writeInt(stringPool.intern(method.returnTypeName))
-        data.writeInt(stringPool.intern(method.declaringClassName))
-        data.writeInt(buildMethodFlags(method))
+        parameterWidth.write(data, method.parameterTypeNames.size)
+        method.parameterTypeNames.forEach { context.writeIndex(data, it) }
 
-        // Parameter types
-        data.writeInt(method.parameterTypeNames.size)
-        method.parameterTypeNames.forEach { data.writeInt(stringPool.intern(it)) }
+        writeAnnotations(data, method.annotations, context)
 
-        writeAnnotations(data, method.annotations)
-
-        // Parameter annotations
-        data.writeInt(method.parameterAnnotations.size)
+        parameterWidth.write(data, method.parameterAnnotations.size)
         method.parameterAnnotations.forEach { annotations ->
-            writeAnnotations(data, annotations)
+            writeAnnotations(data, annotations, context)
         }
     }
 
-    private fun writeAnnotations(data: DataOutputStream, annotations: List<PAnnotationEntry>) {
+    private fun writeAnnotations(
+        data: DataOutputStream,
+        annotations: List<PAnnotationEntry>,
+        context: EncodingContext
+    ) {
         data.writeInt(annotations.size)
-        annotations.forEach { writeAnnotation(data, it) }
+        annotations.forEach { writeAnnotation(data, it, context) }
     }
 
-    private fun writeAnnotation(data: DataOutputStream, annotation: PAnnotationEntry) {
-        data.writeInt(stringPool.intern(annotation.annotationClassName))
-        data.writeInt(stringPool.intern(annotation.simpleName))
-        data.writeInt(annotation.qualifiedName?.let { stringPool.intern(it) } ?: -1)
+    private fun writeAnnotation(
+        data: DataOutputStream,
+        annotation: PAnnotationEntry,
+        context: EncodingContext
+    ) {
+        context.writeIndex(data, annotation.annotationClassName)
+        context.writeIndex(data, annotation.simpleName)
 
-        // Properties
+        val hasQualifiedName = annotation.qualifiedName != null
+        data.writeBoolean(hasQualifiedName)
+        if (hasQualifiedName) {
+            context.writeIndex(data, annotation.qualifiedName!!)
+        }
+
         data.writeInt(annotation.properties.size)
         annotation.properties.forEach { (key, value) ->
-            data.writeInt(stringPool.intern(key))
-            writeAnnotationValue(data, value)
+            context.writeIndex(data, key)
+            writeAnnotationValue(data, context, value)
         }
     }
 
-    private fun writeAnnotationValue(data: DataOutputStream, value: Any?) {
+    private fun writeAnnotationValue(
+        data: DataOutputStream,
+        context: EncodingContext,
+        value: Any?
+    ) {
         when (value) {
-            null -> {
-                data.writeByte(TYPE_NULL)
-            }
-
+            null -> data.writeByte(TYPE_NULL)
             is String -> {
                 data.writeByte(TYPE_STRING)
-                data.writeInt(stringPool.intern(value))
+                context.writeIndex(data, value)
             }
-
             is Boolean -> {
                 data.writeByte(TYPE_BOOLEAN)
                 data.writeBoolean(value)
             }
-
             is Int -> {
                 data.writeByte(TYPE_INT)
                 data.writeInt(value)
             }
-
             is Long -> {
                 data.writeByte(TYPE_LONG)
                 data.writeLong(value)
             }
-
             is Float -> {
                 data.writeByte(TYPE_FLOAT)
                 data.writeFloat(value)
             }
-
             is Double -> {
                 data.writeByte(TYPE_DOUBLE)
                 data.writeDouble(value)
             }
-
-            is List<*> -> {
-                data.writeByte(TYPE_LIST)
-                data.writeInt(value.size)
-                value.forEach { writeAnnotationValue(data, it) }
-            }
-
+            is List<*> -> writeAnnotationList(data, context, value)
             else -> {
                 data.writeByte(TYPE_OTHER)
                 data.writeUTF(value.toString())
@@ -230,11 +257,42 @@ class MetadataSerializer {
         }
     }
 
-    companion object {
-        const val MAGIC_NUMBER = 0x504D4144 // "PMAD" - Portrait Metadata
-        const val VERSION = 4
+    private fun writeAnnotationList(
+        data: DataOutputStream,
+        context: EncodingContext,
+        values: List<*>
+    ) {
+        val (type, width) = listEncodingForSize(values.size)
+        data.writeByte(type)
+        width.write(data, values.size)
+        values.forEach { item ->
+            writeAnnotationValue(data, context, item)
+        }
+    }
 
-        // Type constants for annotation values
+    private fun listEncodingForSize(size: Int): Pair<Int, IntWidth> {
+        val width = IntWidth.forUpperBound(size)
+        val type = when (width) {
+            IntWidth.U8 -> TYPE_LIST_U8
+            IntWidth.U16 -> TYPE_LIST_U16
+            IntWidth.U24 -> TYPE_LIST_U24
+            IntWidth.U32 -> TYPE_LIST_INT
+        }
+        return type to width
+    }
+
+    private data class EncodingContext(
+        val stringPool: StringPool,
+        val stringWidth: IntWidth
+    ) {
+        fun writeIndex(data: DataOutputStream, value: String) {
+            stringWidth.write(data, stringPool.indexOf(value))
+        }
+    }
+
+    companion object {
+        const val VERSION = 6
+
         const val TYPE_NULL = 0
         const val TYPE_STRING = 1
         const val TYPE_BOOLEAN = 2
@@ -242,7 +300,10 @@ class MetadataSerializer {
         const val TYPE_LONG = 4
         const val TYPE_FLOAT = 5
         const val TYPE_DOUBLE = 6
-        const val TYPE_LIST = 7
-        const val TYPE_OTHER = 8
+        const val TYPE_LIST_U8 = 7
+        const val TYPE_LIST_U16 = 8
+        const val TYPE_LIST_U24 = 9
+        const val TYPE_LIST_INT = 10
+        const val TYPE_OTHER = 11
     }
 }

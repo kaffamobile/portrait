@@ -9,6 +9,7 @@ data class PClassEntry(
     val isCompanion: Boolean,
     val isObject: Boolean,
     val isEnum: Boolean,
+    val isInterface: Boolean,
     val javaClassName: String,
     val superclassName: String?,
     val interfaceNames: List<String>,

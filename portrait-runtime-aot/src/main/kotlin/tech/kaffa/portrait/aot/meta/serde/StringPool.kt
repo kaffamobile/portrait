@@ -12,6 +12,11 @@ class StringPool {
         }
     }
 
+    fun indexOf(string: String): Int {
+        return stringToIndex[string]
+            ?: error("String '$string' was not interned in this StringPool")
+    }
+
     fun getString(index: Int): String = indexToString[index]
 
     fun getStrings(): List<String> = indexToString.toList()

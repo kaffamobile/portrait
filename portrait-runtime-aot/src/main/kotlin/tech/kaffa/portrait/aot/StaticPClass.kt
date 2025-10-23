@@ -35,6 +35,8 @@ class StaticPClass<T : Any>(
     override val isData: Boolean get() = classEntry.isData
     override val isCompanion: Boolean get() = classEntry.isCompanion
     override val isEnum: Boolean get() = classEntry.isEnum
+    override val isInterface: Boolean get() = classEntry.isInterface
+
     override val enumConstants: Array<T>?
         get() =
             if (classEntry.isEnum) {

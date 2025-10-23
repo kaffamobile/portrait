@@ -191,6 +191,7 @@ class PortraitClassFactory(
             isCompanion = kotlinMetadata?.kind == ClassKind.COMPANION_OBJECT,
             isObject = kotlinMetadata?.kind == ClassKind.OBJECT,
             isEnum = typeDescription.isEnum,
+            isInterface = typeDescription.isInterface,
             javaClassName = typeDescription.typeName,
             superclassName = typeDescription.superclassNameOrNull(),
             interfaceNames = typeDescription.interfaceNames(),

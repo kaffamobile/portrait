@@ -77,13 +77,13 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     override val isData: Boolean = kClass.isData
     override val isCompanion: Boolean = kClass.isCompanion
     override val isEnum: Boolean = kClass.java.isEnum
+    override val isInterface: Boolean = kClass.java.isInterface
     override val objectInstance: T? = kClass.objectInstance
     override val enumConstants: Array<T>? by lazy {
-        if (!isEnum) {
-            null
+        if (isEnum) {
+            kClass.java.enumConstants
         } else {
-            @Suppress("UNCHECKED_CAST")
-            kClass.java.enumConstants as Array<T>?
+            null
         }
     }
 

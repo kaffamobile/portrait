@@ -76,6 +76,11 @@ abstract class PClass<T : Any> {
     open val isEnum: Boolean = false
 
     /**
+     * True when this descriptor represents a Kotlin/JVM interface type.
+     */
+    open val isInterface: Boolean = false
+
+    /**
      * Enum constants declared by this type when [isEnum] is `true`; `null` otherwise.
      *
      * Providers should return a stable snapshot that preserves declaration order. Implementations
