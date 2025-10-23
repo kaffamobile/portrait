@@ -274,7 +274,6 @@ public class PortraitIntegrationTest {
 
     @Test
     public void selectsMatchingConstructorOverload() {
-        Portrait.INSTANCE.debug();
         PClass<MultiConstructorClass> multiConstructor = Portrait.of(MultiConstructorClass.class);
 
         MultiConstructorClass oneArg = multiConstructor.createInstance("first");
