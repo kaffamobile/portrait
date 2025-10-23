@@ -1,6 +1,7 @@
 import org.gradle.jvm.toolchain.JavaLanguageVersion
 
 plugins {
+    alias(libs.plugins.kotlin.jvm)
     `java`
     `java-test-fixtures`
 }
@@ -17,5 +18,10 @@ java {
 
 dependencies {
     testFixturesImplementation(project(":portrait-api"))
+    testFixturesImplementation(libs.kotlin.stdlib)
     testFixturesImplementation(libs.junit4)
+}
+
+kotlin {
+    jvmToolchain(11)
 }

@@ -72,7 +72,7 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
     override val interfaces: List<PClass<*>> by lazy { kClass.java.interfaces.map { Portrait.of(it) } }
     override val simpleName: String = kClass.simpleName ?: "<anonymous>"
     override val qualifiedName: String = kClass.java.name
-    override val isAbstract: Boolean = kClass.isAbstract
+    override val isAbstract: Boolean = Modifier.isAbstract(kClass.java.modifiers)
     override val isSealed: Boolean = kClass.isSealed
     override val isData: Boolean = kClass.isData
     override val isCompanion: Boolean = kClass.isCompanion

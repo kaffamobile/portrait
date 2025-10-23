@@ -143,6 +143,39 @@ class StaticPClassTest {
         return MetadataSerializer().serialize(createTestSingletonEntry())
     }
 
+    private fun baseFlagsEntry(
+        simpleName: String,
+        qualifiedName: String = "com.example.$simpleName",
+        superclassName: String? = "java.lang.Object"
+    ): PClassEntry = PClassEntry(
+        simpleName = simpleName,
+        qualifiedName = qualifiedName,
+        isAbstract = false,
+        isSealed = false,
+        isData = false,
+        isCompanion = false,
+        isObject = false,
+        isEnum = false,
+        isInterface = false,
+        javaClassName = qualifiedName,
+        superclassName = superclassName,
+        interfaceNames = emptyList(),
+        annotations = emptyList(),
+        constructors = emptyList(),
+        declaredMethods = emptyList(),
+        declaredFields = emptyList(),
+        proxyMethods = emptyList()
+    )
+
+    private fun staticPClassFor(entry: PClassEntry): StaticPClass<Any> {
+        val mockPortrait = mockk<StaticPortrait<Any>>()
+
+        every { mockPortrait.getClassName() } returns entry.qualifiedName
+        every { mockPortrait.getMetadata() } returns MetadataSerializer().serialize(entry)
+
+        return StaticPClass(mockPortrait)
+    }
+
     @Test
     fun `StaticPClass basic properties from metadata`() {
         val mockPortrait = mockk<StaticPortrait<TestClass>>()
@@ -352,6 +385,78 @@ class StaticPClassTest {
         val annotations = staticPClass.annotations
         assertEquals(1, annotations.size)
         assertEquals("TestAnnotation", annotations[0].annotationClass.simpleName)
+    }
+
+    @Test
+    fun `StaticPClass reports abstract flag`() {
+        val staticPClass = staticPClassFor(baseFlagsEntry("AbstractFlags").copy(isAbstract = true))
+
+        assertTrue(staticPClass.isAbstract)
+        assertFalse(staticPClass.isSealed)
+        assertFalse(staticPClass.isData)
+        assertFalse(staticPClass.isCompanion)
+        assertFalse(staticPClass.isEnum)
+        assertFalse(staticPClass.isInterface)
+    }
+
+    @Test
+    fun `StaticPClass reports sealed flag`() {
+        val staticPClass = staticPClassFor(
+            baseFlagsEntry("SealedFlags").copy(
+                isAbstract = true,
+                isSealed = true
+            )
+        )
+
+        assertTrue(staticPClass.isSealed)
+        assertTrue(staticPClass.isAbstract)
+    }
+
+    @Test
+    fun `StaticPClass reports data flag`() {
+        val staticPClass = staticPClassFor(baseFlagsEntry("DataFlags").copy(isData = true))
+
+        assertTrue(staticPClass.isData)
+        assertFalse(staticPClass.isAbstract)
+        assertFalse(staticPClass.isSealed)
+    }
+
+    @Test
+    fun `StaticPClass reports companion flag`() {
+        val staticPClass = staticPClassFor(
+            baseFlagsEntry("CompanionFlags").copy(
+                isCompanion = true,
+                isObject = true
+            )
+        )
+
+        assertTrue(staticPClass.isCompanion)
+        assertFalse(staticPClass.isEnum)
+        assertFalse(staticPClass.isInterface)
+    }
+
+    @Test
+    fun `StaticPClass reports enum flag`() {
+        val staticPClass = staticPClassFor(
+            baseFlagsEntry("EnumFlags", superclassName = "java.lang.Enum").copy(isEnum = true)
+        )
+
+        assertTrue(staticPClass.isEnum)
+        assertFalse(staticPClass.isInterface)
+    }
+
+    @Test
+    fun `StaticPClass reports interface flag`() {
+        val staticPClass = staticPClassFor(
+            baseFlagsEntry("InterfaceFlags", superclassName = null).copy(
+                isInterface = true,
+                isAbstract = true
+            )
+        )
+
+        assertTrue(staticPClass.isInterface)
+        assertTrue(staticPClass.isAbstract)
+        assertFalse(staticPClass.isEnum)
     }
 }
 
