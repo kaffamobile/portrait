@@ -129,15 +129,18 @@ tasks {
             .runtimeClasspath
 
         doFirst {
+            // Exclude the generatedPortraitDir (this task's outputs) from the input classpath
+            val outputDir = generatedPortraitDir.get().asFile
             val input = configurations
                 .testRuntimeClasspath
                 .get()
                 .resolve()
+                .filterNot { it == outputDir }
                 .joinToString(File.pathSeparator) { it.absolutePath }
 
             args = listOf(
                 "--input", input,
-                "--output", generatedPortraitDir.get().asFile.absolutePath,
+                "--output", outputDir.absolutePath,
                 "--teavm"
             )
         }

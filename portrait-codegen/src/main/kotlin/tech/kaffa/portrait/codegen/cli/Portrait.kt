@@ -14,6 +14,8 @@ import tech.kaffa.portrait.codegen.ClasspathScanner
 import tech.kaffa.portrait.codegen.PortraitGenerator
 import tech.kaffa.portrait.codegen.PortraitGenerator.OutputType
 import tech.kaffa.portrait.codegen.utils.ClasslibConfiguration
+import tech.kaffa.portrait.internal.InternalPortraitProvider
+import tech.kaffa.portrait.provider.PortraitProvider
 import kotlin.io.path.pathString
 import java.nio.file.Files
 import java.nio.file.Path
@@ -107,6 +109,8 @@ class Portrait : CliktCommand(
 
         logger.info("Scanning classpath for Portrait annotations...")
         ClasspathScanner(input, classlib).scan().use { scanResult ->
+            warnIfExternalPortraitProviders(scanResult)
+
             val reflectiveCount = scanResult.reflectives.size
             val proxyTargetCount = scanResult.proxyTargets.size
             logger.info(
@@ -136,6 +140,19 @@ class Portrait : CliktCommand(
                 .use { generator -> generator.generate() }
 
             logger.info("Portrait code generation completed successfully")
+        }
+    }
+
+    private fun warnIfExternalPortraitProviders(scanResult: ClasspathScanner.Result) {
+        val implementations = scanResult.result
+            .getClassesImplementing(PortraitProvider::class.java)
+            .filterNot { it.name == InternalPortraitProvider::class.java.name }
+            .map { it.name }
+
+        if (implementations.isNotEmpty()) {
+            logger.warn("⚠️ Detected ${implementations.size} PortraitProvider ${pluralize(implementations.size, "implementation")} present on classpath:")
+            implementations.forEach { logger.warn(" - $it") }
+            logger.warn("This is not supported and may lead to undefined behavior at runtime.")
         }
     }
 
