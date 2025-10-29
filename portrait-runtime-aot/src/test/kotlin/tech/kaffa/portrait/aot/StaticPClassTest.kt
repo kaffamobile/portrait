@@ -10,6 +10,7 @@ import tech.kaffa.portrait.aot.meta.PClassEntry
 import tech.kaffa.portrait.aot.meta.PConstructorEntry
 import tech.kaffa.portrait.aot.meta.PFieldEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
 import tech.kaffa.portrait.aot.meta.serde.MetadataSerializer
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -53,6 +54,7 @@ class StaticPClassTest {
                     name = "testMethod",
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
+                    genericReturnType = PClassTypeEntry("int"),
                     declaringClassName = "com.example.TestClass",
                     isStatic = false,
                     isFinal = false,
@@ -76,6 +78,7 @@ class StaticPClassTest {
                     name = "proxyTestMethod",
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
+                    genericReturnType = PClassTypeEntry("int"),
                     declaringClassName = "com.example.TestClass\$Proxy",
                     isStatic = false,
                     isFinal = false,

@@ -81,6 +81,7 @@ class PMethodMatchesTest {
             override val parameterTypes: List<PClass<*>> = parameterTypes
             override val parameterCount: Int = parameterTypes.size
             override val returnType: PClass<*> = returnType
+            override val genericReturnType: PType = PClassType(returnType)
             override val declaringClass: PClass<*> = declaringType
             override val isStatic: Boolean = false
             override val isFinal: Boolean = false

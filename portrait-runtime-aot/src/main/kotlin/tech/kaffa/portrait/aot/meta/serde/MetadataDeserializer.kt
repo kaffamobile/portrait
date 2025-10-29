@@ -5,6 +5,12 @@ import tech.kaffa.portrait.aot.meta.PClassEntry
 import tech.kaffa.portrait.aot.meta.PConstructorEntry
 import tech.kaffa.portrait.aot.meta.PFieldEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PTypeEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
+import tech.kaffa.portrait.aot.meta.PParameterizedTypeEntry
+import tech.kaffa.portrait.aot.meta.PTypeVariableEntry
+import tech.kaffa.portrait.aot.meta.PWildcardTypeEntry
+import tech.kaffa.portrait.aot.meta.PGenericArrayTypeEntry
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import java.util.Base64
@@ -133,6 +139,7 @@ class MetadataDeserializer {
     private fun readMethod(stream: DataInputStream, context: DecodingContext): PMethodEntry {
         val name = context.readString(stream)
         val returnTypeName = context.readString(stream)
+        val genericReturnType = readType(stream, context)
         val declaringClassName = context.readString(stream)
         val flags = stream.readUnsignedByte()
         val parameterWidthId = (flags shr MethodFlags.PARAM_WIDTH_SHIFT) and MethodFlags.PARAM_WIDTH_VALUE_MASK
@@ -152,6 +159,7 @@ class MetadataDeserializer {
             name = name,
             parameterTypeNames = parameterTypeNames,
             returnTypeName = returnTypeName,
+            genericReturnType = genericReturnType,
             declaringClassName = declaringClassName,
             isStatic = (flags and MethodFlags.IS_STATIC) != 0,
             isFinal = (flags and MethodFlags.IS_FINAL) != 0,
@@ -159,6 +167,60 @@ class MetadataDeserializer {
             annotations = annotations,
             parameterAnnotations = parameterAnnotations
         )
+    }
+
+    private fun readType(stream: DataInputStream, context: DecodingContext): PTypeEntry {
+        return when (val kind = stream.readUnsignedByte()) {
+            MetadataSerializer.GENERIC_TYPE_CLASS -> {
+                val className = context.readString(stream)
+                PClassTypeEntry(className)
+            }
+            MetadataSerializer.GENERIC_TYPE_PARAMETERIZED -> {
+                val rawTypeName = context.readString(stream)
+                val ownerType = if (stream.readBoolean()) {
+                    readType(stream, context)
+                } else {
+                    null
+                }
+                val argWidth = IntWidth.fromId(stream.readUnsignedByte())
+                val argCount = argWidth.read(stream)
+                val arguments = (0 until argCount).map { readType(stream, context) }
+                PParameterizedTypeEntry(
+                    rawTypeName = rawTypeName,
+                    ownerType = ownerType,
+                    arguments = arguments
+                )
+            }
+            MetadataSerializer.GENERIC_TYPE_VARIABLE -> {
+                val name = context.readString(stream)
+                val boundsWidth = IntWidth.fromId(stream.readUnsignedByte())
+                val boundsCount = boundsWidth.read(stream)
+                val bounds = (0 until boundsCount).map { readType(stream, context) }
+                PTypeVariableEntry(
+                    name = name,
+                    bounds = bounds
+                )
+            }
+            MetadataSerializer.GENERIC_TYPE_WILDCARD -> {
+                val upperWidth = IntWidth.fromId(stream.readUnsignedByte())
+                val upperCount = upperWidth.read(stream)
+                val upperBounds = (0 until upperCount).map { readType(stream, context) }
+
+                val lowerWidth = IntWidth.fromId(stream.readUnsignedByte())
+                val lowerCount = lowerWidth.read(stream)
+                val lowerBounds = (0 until lowerCount).map { readType(stream, context) }
+
+                PWildcardTypeEntry(
+                    upperBounds = upperBounds,
+                    lowerBounds = lowerBounds
+                )
+            }
+            MetadataSerializer.GENERIC_TYPE_GENERIC_ARRAY -> {
+                val componentType = readType(stream, context)
+                PGenericArrayTypeEntry(componentType)
+            }
+            else -> throw IllegalArgumentException("Unknown generic type marker: $kind")
+        }
     }
 
     private fun readAnnotations(stream: DataInputStream, context: DecodingContext): List<PAnnotationEntry> {

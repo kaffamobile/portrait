@@ -4,6 +4,7 @@ import tech.kaffa.portrait.PAnnotation
 import tech.kaffa.portrait.PClass
 import tech.kaffa.portrait.PMethod
 import tech.kaffa.portrait.Portrait
+import tech.kaffa.portrait.PType
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -60,6 +61,7 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
     override val parameterTypes: List<PClass<*>> by lazy { method.parameterTypes.map { Portrait.of(it) } }
     override val parameterCount: Int = method.parameterCount
     override val returnType: PClass<*> by lazy { Portrait.of(method.returnType) }
+    override val genericReturnType: PType by lazy { method.genericReturnType.toPortraitType() }
     override val declaringClass: PClass<*> by lazy { Portrait.of(method.declaringClass) }
     override val isStatic: Boolean = Modifier.isStatic(method.modifiers)
     override val isFinal: Boolean = Modifier.isFinal(method.modifiers)

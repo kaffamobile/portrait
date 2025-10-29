@@ -10,6 +10,7 @@ import tech.kaffa.portrait.PClass;
 import tech.kaffa.portrait.PField;
 import tech.kaffa.portrait.PMethod;
 import tech.kaffa.portrait.Portrait;
+import tech.kaffa.portrait.tests.fixtures.GenericFixtures;
 import tech.kaffa.portrait.proxy.ProxyHandler;
 import tech.kaffa.portrait.tests.fixtures.AnnotatedTestClass;
 import tech.kaffa.portrait.tests.fixtures.Calculator;
@@ -26,6 +27,7 @@ import tech.kaffa.portrait.tests.fixtures.TestInterface;
 import tech.kaffa.portrait.tests.fixtures.TestSingleton;
 
 import static org.junit.Assert.*;
+import static tech.kaffa.portrait.PTypeKt.typeName;
 
 public class PortraitIntegrationTest {
 
@@ -318,5 +320,32 @@ public class PortraitIntegrationTest {
         assertEquals("proxied", proxy.doSomething());
         assertEquals(9, proxy.processValue(3));
         assertEquals("proxy", proxy.getName());
+    }
+
+    @Test
+    public void genericReturnTypesExposeFullMetadataAcrossRuntimes() {
+        PClass<GenericFixtures> genericClass = Portrait.of(GenericFixtures.class);
+
+        PMethod stringList = requireMethod(genericClass, "stringList");
+        PMethod identity = requireMethod(genericClass, "identity");
+        PMethod wildcardExtends = requireMethod(genericClass, "wildcardExtends");
+        PMethod wildcardSuper = requireMethod(genericClass, "wildcardSuper");
+        PMethod genericArray = requireMethod(genericClass, "genericArray");
+
+        assertEquals("java.util.List<java.lang.String>", typeName(stringList.getGenericReturnType()));
+        assertEquals("T", typeName(identity.getGenericReturnType()));
+        assertEquals("java.util.List<? extends java.lang.Number>", typeName(wildcardExtends.getGenericReturnType()));
+        assertEquals("java.util.List<? super java.lang.Number>", typeName(wildcardSuper.getGenericReturnType()));
+        assertEquals("T[]", typeName(genericArray.getGenericReturnType()));
+    }
+
+    private PMethod requireMethod(PClass<?> pClass, String name) {
+        for (PMethod method : pClass.getMethods()) {
+            if (name.equals(method.getName())) {
+                return method;
+            }
+        }
+        fail("Expected method named '" + name + "' on " + pClass.getQualifiedName());
+        return null;
     }
 }

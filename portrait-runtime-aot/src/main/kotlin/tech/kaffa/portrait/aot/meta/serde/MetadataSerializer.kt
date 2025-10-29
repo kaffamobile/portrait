@@ -5,6 +5,12 @@ import tech.kaffa.portrait.aot.meta.PClassEntry
 import tech.kaffa.portrait.aot.meta.PConstructorEntry
 import tech.kaffa.portrait.aot.meta.PFieldEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PTypeEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
+import tech.kaffa.portrait.aot.meta.PParameterizedTypeEntry
+import tech.kaffa.portrait.aot.meta.PTypeVariableEntry
+import tech.kaffa.portrait.aot.meta.PWildcardTypeEntry
+import tech.kaffa.portrait.aot.meta.PGenericArrayTypeEntry
 import java.io.ByteArrayOutputStream
 import java.io.DataOutputStream
 import java.util.Base64
@@ -64,10 +70,31 @@ class MetadataSerializer {
         stringPool.intern(method.name)
         method.parameterTypeNames.forEach { stringPool.intern(it) }
         stringPool.intern(method.returnTypeName)
+        collectTypeStrings(stringPool, method.genericReturnType)
         stringPool.intern(method.declaringClassName)
         method.annotations.forEach { collectAnnotationStrings(stringPool, it) }
         method.parameterAnnotations.forEach { annotations ->
             annotations.forEach { collectAnnotationStrings(stringPool, it) }
+        }
+    }
+
+    private fun collectTypeStrings(stringPool: StringPool, type: PTypeEntry) {
+        when (type) {
+            is PClassTypeEntry -> stringPool.intern(type.className)
+            is PParameterizedTypeEntry -> {
+                stringPool.intern(type.rawTypeName)
+                type.ownerType?.let { collectTypeStrings(stringPool, it) }
+                type.arguments.forEach { collectTypeStrings(stringPool, it) }
+            }
+            is PTypeVariableEntry -> {
+                stringPool.intern(type.name)
+                type.bounds.forEach { collectTypeStrings(stringPool, it) }
+            }
+            is PWildcardTypeEntry -> {
+                type.upperBounds.forEach { collectTypeStrings(stringPool, it) }
+                type.lowerBounds.forEach { collectTypeStrings(stringPool, it) }
+            }
+            is PGenericArrayTypeEntry -> collectTypeStrings(stringPool, type.componentType)
         }
     }
 
@@ -167,6 +194,7 @@ class MetadataSerializer {
     ) {
         context.writeIndex(data, method.name)
         context.writeIndex(data, method.returnTypeName)
+        writeType(data, method.genericReturnType, context)
         context.writeIndex(data, method.declaringClassName)
 
         val parameterWidth = IntWidth.forUpperBound(
@@ -185,6 +213,55 @@ class MetadataSerializer {
         parameterWidth.write(data, method.parameterAnnotations.size)
         method.parameterAnnotations.forEach { annotations ->
             writeAnnotations(data, annotations, context)
+        }
+    }
+
+    private fun writeType(
+        data: DataOutputStream,
+        type: PTypeEntry,
+        context: EncodingContext
+    ) {
+        when (type) {
+            is PClassTypeEntry -> {
+                data.writeByte(GENERIC_TYPE_CLASS)
+                context.writeIndex(data, type.className)
+            }
+            is PParameterizedTypeEntry -> {
+                data.writeByte(GENERIC_TYPE_PARAMETERIZED)
+                context.writeIndex(data, type.rawTypeName)
+                data.writeBoolean(type.ownerType != null)
+                type.ownerType?.let { writeType(data, it, context) }
+
+                val argumentWidth = IntWidth.forUpperBound(type.arguments.size)
+                data.writeByte(argumentWidth.id)
+                argumentWidth.write(data, type.arguments.size)
+                type.arguments.forEach { writeType(data, it, context) }
+            }
+            is PTypeVariableEntry -> {
+                data.writeByte(GENERIC_TYPE_VARIABLE)
+                context.writeIndex(data, type.name)
+                val boundsWidth = IntWidth.forUpperBound(type.bounds.size)
+                data.writeByte(boundsWidth.id)
+                boundsWidth.write(data, type.bounds.size)
+                type.bounds.forEach { writeType(data, it, context) }
+            }
+            is PWildcardTypeEntry -> {
+                data.writeByte(GENERIC_TYPE_WILDCARD)
+
+                val upperWidth = IntWidth.forUpperBound(type.upperBounds.size)
+                data.writeByte(upperWidth.id)
+                upperWidth.write(data, type.upperBounds.size)
+                type.upperBounds.forEach { writeType(data, it, context) }
+
+                val lowerWidth = IntWidth.forUpperBound(type.lowerBounds.size)
+                data.writeByte(lowerWidth.id)
+                lowerWidth.write(data, type.lowerBounds.size)
+                type.lowerBounds.forEach { writeType(data, it, context) }
+            }
+            is PGenericArrayTypeEntry -> {
+                data.writeByte(GENERIC_TYPE_GENERIC_ARRAY)
+                writeType(data, type.componentType, context)
+            }
         }
     }
 
@@ -291,7 +368,13 @@ class MetadataSerializer {
     }
 
     companion object {
-        const val VERSION = 6
+        const val VERSION = 7
+
+        const val GENERIC_TYPE_CLASS = 0
+        const val GENERIC_TYPE_PARAMETERIZED = 1
+        const val GENERIC_TYPE_VARIABLE = 2
+        const val GENERIC_TYPE_WILDCARD = 3
+        const val GENERIC_TYPE_GENERIC_ARRAY = 4
 
         const val TYPE_NULL = 0
         const val TYPE_STRING = 1

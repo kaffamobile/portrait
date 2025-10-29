@@ -20,6 +20,9 @@ abstract class PMethod {
     /** The return type of this method */
     abstract val returnType: PClass<*>
 
+    /** The generic return type of this method */
+    abstract val genericReturnType: PType
+
     /** The class that declares this method */
     abstract val declaringClass: PClass<*>
 

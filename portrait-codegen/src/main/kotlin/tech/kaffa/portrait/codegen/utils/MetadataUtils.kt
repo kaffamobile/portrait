@@ -29,6 +29,7 @@ fun MethodDescription.toPMethodEntry(declaringClassName: String): PMethodEntry {
         name = name,
         parameterTypeNames = parameterTypeNames(),
         returnTypeName = returnTypeName(),
+        genericReturnType = returnType.toPTypeEntry(),
         declaringClassName = declaringClassName,
         isStatic = isStatic,
         isFinal = isFinal,

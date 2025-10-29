@@ -5,7 +5,9 @@ import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import tech.kaffa.portrait.aot.meta.PClassEntry
 import tech.kaffa.portrait.aot.meta.PConstructorEntry
 import tech.kaffa.portrait.aot.meta.PFieldEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PParameterizedTypeEntry
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
@@ -20,6 +22,7 @@ class MetadataSerializationTest {
             name = "proxyMethod",
             parameterTypeNames = listOf("java.lang.String"),
             returnTypeName = "java.lang.Object",
+            genericReturnType = PClassTypeEntry("java.lang.Object"),
             declaringClassName = "com.example.TestClass\$Proxy",
             isStatic = false,
             isFinal = false,
@@ -74,6 +77,7 @@ class MetadataSerializationTest {
             name = "testMethod",
             parameterTypeNames = listOf("java.lang.String", "int"),
             returnTypeName = "java.lang.Object",
+            genericReturnType = PClassTypeEntry("java.lang.Object"),
             declaringClassName = "com.example.TestClass",
             isStatic = false,
             isFinal = true,
@@ -111,9 +115,59 @@ class MetadataSerializationTest {
         assertEquals(methodEntry.name, deserializedMethod.name)
         assertEquals(methodEntry.parameterTypeNames, deserializedMethod.parameterTypeNames)
         assertEquals(methodEntry.returnTypeName, deserializedMethod.returnTypeName)
+        assertEquals(methodEntry.genericReturnType, deserializedMethod.genericReturnType)
         assertEquals(methodEntry.declaringClassName, deserializedMethod.declaringClassName)
         assertEquals(methodEntry.isStatic, deserializedMethod.isStatic)
         assertEquals(methodEntry.isFinal, deserializedMethod.isFinal)
+    }
+
+    @Test
+    fun `MetadataSerializer roundtrips parameterized generic return type`() {
+        val serializer = MetadataSerializer()
+        val deserializer = MetadataDeserializer()
+
+        val methodEntry = PMethodEntry(
+            name = "parameterized",
+            parameterTypeNames = emptyList(),
+            returnTypeName = "java.util.List",
+            genericReturnType = PParameterizedTypeEntry(
+                rawTypeName = "java.util.List",
+                ownerType = null,
+                arguments = listOf(PClassTypeEntry("java.lang.Integer"))
+            ),
+            declaringClassName = "com.example.GenericHolder",
+            isStatic = false,
+            isFinal = false,
+            isAbstract = false,
+            annotations = emptyList(),
+            parameterAnnotations = emptyList()
+        )
+
+        val classEntry = PClassEntry(
+            simpleName = "GenericHolder",
+            qualifiedName = "com.example.GenericHolder",
+            isAbstract = false,
+            isSealed = false,
+            isData = false,
+            isCompanion = false,
+            isObject = false,
+            isEnum = false,
+            isInterface = false,
+            javaClassName = "com.example.GenericHolder",
+            superclassName = "java.lang.Object",
+            interfaceNames = emptyList(),
+            annotations = emptyList(),
+            constructors = emptyList(),
+            declaredMethods = listOf(methodEntry),
+            declaredFields = emptyList(),
+            proxyMethods = emptyList()
+        )
+
+        val serialized = serializer.serialize(classEntry)
+        val deserialized = deserializer.deserialize(serialized)
+
+        val deserializedMethod = deserialized.declaredMethods.single()
+        assertEquals(methodEntry.genericReturnType, deserializedMethod.genericReturnType)
     }
 
     @Test
@@ -290,6 +344,7 @@ class MetadataSerializationTest {
                     name = "complexMethod",
                     parameterTypeNames = listOf("java.lang.String"),
                     returnTypeName = "int",
+                    genericReturnType = PClassTypeEntry("int"),
                     declaringClassName = "com.example.ComplexClass",
                     isStatic = false,
                     isFinal = false,

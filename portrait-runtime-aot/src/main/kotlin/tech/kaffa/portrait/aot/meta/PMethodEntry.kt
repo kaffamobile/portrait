@@ -4,6 +4,7 @@ data class PMethodEntry(
     val name: String,
     val parameterTypeNames: List<String>,
     val returnTypeName: String,
+    val genericReturnType: PTypeEntry,
     val declaringClassName: String,
     val isStatic: Boolean,
     val isFinal: Boolean,

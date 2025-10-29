@@ -2,9 +2,21 @@ package tech.kaffa.portrait.aot
 
 import tech.kaffa.portrait.PAnnotation
 import tech.kaffa.portrait.PClass
+import tech.kaffa.portrait.PClassType
+import tech.kaffa.portrait.PGenericArrayType
 import tech.kaffa.portrait.PMethod
+import tech.kaffa.portrait.PParameterizedType
+import tech.kaffa.portrait.PType
+import tech.kaffa.portrait.PTypeVariable
+import tech.kaffa.portrait.PWildcardType
 import tech.kaffa.portrait.Portrait
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
+import tech.kaffa.portrait.aot.meta.PGenericArrayTypeEntry
+import tech.kaffa.portrait.aot.meta.PParameterizedTypeEntry
+import tech.kaffa.portrait.aot.meta.PTypeEntry
+import tech.kaffa.portrait.aot.meta.PTypeVariableEntry
+import tech.kaffa.portrait.aot.meta.PWildcardTypeEntry
 
 /**
  * AOT implementation of PMethod that uses precomputed metadata.
@@ -27,6 +39,10 @@ class StaticPMethod(
 
     override val returnType: PClass<*> by lazy {
         Portrait.forNameOrUnresolved(methodEntry.returnTypeName)
+    }
+
+    override val genericReturnType: PType by lazy {
+        methodEntry.genericReturnType.toPType()
     }
 
     override val declaringClass: PClass<*> by lazy {
@@ -64,4 +80,22 @@ class StaticPMethod(
             paramAnnotations.map { StaticPAnnotation(it) }
         }
     }
+}
+
+private fun PTypeEntry.toPType(): PType = when (this) {
+    is PClassTypeEntry -> PClassType(Portrait.forNameOrUnresolved(className))
+    is PParameterizedTypeEntry -> PParameterizedType(
+        rawType = Portrait.forNameOrUnresolved(rawTypeName),
+        ownerType = ownerType?.toPType(),
+        arguments = arguments.map { it.toPType() }
+    )
+    is PTypeVariableEntry -> PTypeVariable(
+        name = name,
+        bounds = bounds.map { it.toPType() }
+    )
+    is PWildcardTypeEntry -> PWildcardType(
+        upperBounds = upperBounds.map { it.toPType() },
+        lowerBounds = lowerBounds.map { it.toPType() }
+    )
+    is PGenericArrayTypeEntry -> PGenericArrayType(componentType.toPType())
 }

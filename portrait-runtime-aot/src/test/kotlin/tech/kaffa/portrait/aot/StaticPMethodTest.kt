@@ -5,6 +5,9 @@ import io.mockk.mockk
 import kotlin.test.Test
 import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import tech.kaffa.portrait.aot.meta.PMethodEntry
+import tech.kaffa.portrait.aot.meta.PClassTypeEntry
+import tech.kaffa.portrait.aot.meta.PParameterizedTypeEntry
+import tech.kaffa.portrait.typeName
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
@@ -17,6 +20,7 @@ class StaticPMethodTest {
             name = "testMethod",
             parameterTypeNames = listOf("java.lang.String", "int"),
             returnTypeName = "java.lang.Object",
+            genericReturnType = PClassTypeEntry("java.lang.Object"),
             declaringClassName = "com.example.TestClass",
             isStatic = false,
             isFinal = true,
@@ -68,6 +72,7 @@ class StaticPMethodTest {
 
         // Return type should be resolved via Portrait.forName
         assertFalse(staticPMethod.returnType.toString().isEmpty())
+        assertEquals("java.lang.Object", staticPMethod.genericReturnType.typeName())
     }
 
     @Test
@@ -120,7 +125,10 @@ class StaticPMethodTest {
     @Test
     fun `StaticPMethod handles void return type`() {
         val mockPortrait = mockk<StaticPortrait<TestClass>>()
-        val voidMethodEntry = createTestMethodEntry().copy(returnTypeName = "void")
+        val voidMethodEntry = createTestMethodEntry().copy(
+            returnTypeName = "void",
+            genericReturnType = PClassTypeEntry("void")
+        )
         val testInstance = TestClass("test")
 
         every { mockPortrait.invokeMethod(1, testInstance, arrayOf("param1", 42)) } returns null
@@ -129,6 +137,24 @@ class StaticPMethodTest {
 
         val result = staticPMethod.invoke(testInstance, "param1", 42)
         assertEquals(null, result) // void methods return null
+        assertEquals("void", staticPMethod.genericReturnType.typeName())
+    }
+
+    @Test
+    fun `StaticPMethod exposes parameterized generic return type`() {
+        val mockPortrait = mockk<StaticPortrait<TestClass>>()
+        val parameterizedEntry = createTestMethodEntry().copy(
+            returnTypeName = "java.util.List",
+            genericReturnType = PParameterizedTypeEntry(
+                rawTypeName = "java.util.List",
+                ownerType = null,
+                arguments = listOf(PClassTypeEntry("java.lang.String"))
+            )
+        )
+
+        val staticPMethod = StaticPMethod(parameterizedEntry, 0, mockPortrait)
+
+        assertEquals("java.util.List<java.lang.String>", staticPMethod.genericReturnType.typeName())
     }
 
     @Test
