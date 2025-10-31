@@ -42,7 +42,7 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
         )
     }
 
-    override fun createInstance(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         throw UnsupportedOperationException("Array instantiation via Portrait not supported")
     }
 
@@ -67,8 +67,8 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
         }
     }
 
-    override val annotations: List<PAnnotation> = emptyList()
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? = null
+    override val annotations: List<PAnnotation<*>> = emptyList()
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? = null
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean = false
 
     override val constructors: List<PConstructor<T>> = emptyList()
@@ -208,3 +208,5 @@ internal class ArrayPClass<T : Any>(private val arrayTypeName: String) : PClass<
         }
     }
 }
+
+

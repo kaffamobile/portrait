@@ -70,13 +70,14 @@ internal class JvmPField(private val field: Field) : PField() {
         field.set(instance, value)
     }
 
-    override val annotations: List<PAnnotation> =
+    override val annotations: List<PAnnotation<*>> =
         field.annotations.map { JvmPAnnotation(it) }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? {
-        @Suppress("UNCHECKED_CAST")
-        val javaClass = pClassToJavaClass(annotationClass) as Class<out Annotation>
-        return field.getAnnotation(javaClass)?.let { JvmPAnnotation(it) }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? {
+        val javaClass = pClassToJavaClass(annotationClass) as Class<A>
+        val instance = field.getAnnotation(javaClass) ?: return null
+        return JvmPAnnotation(instance)
     }
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean {

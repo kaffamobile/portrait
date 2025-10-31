@@ -4,6 +4,7 @@ import kotlin.io.path.isRegularFile
 import org.gradle.api.tasks.JavaExec
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.compile.JavaCompile
+import java.util.Locale
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
@@ -153,6 +154,20 @@ tasks {
             generateTeaVmWrappers,
             runPortraitTestsCodegen
         )
+
+        onlyIf {
+            val binary = expectedChromeBinary()
+            if (binary == null) {
+                true
+            } else if (isExecutableOnPath(binary)) {
+                true
+            } else {
+                logger.warn(
+                    "Skipping $path because '$binary' is not available on PATH. Install Chrome or expose it on PATH to enable TeaVM runtime tests."
+                )
+                false
+            }
+        }
     }
 }
 
@@ -160,6 +175,27 @@ teavm {
     tests {
         js {
             enabled = true
+        }
+    }
+}
+
+fun expectedChromeBinary(): String? {
+    val osName = System.getProperty("os.name").lowercase(Locale.US)
+    return when {
+        osName.contains("win") -> "chrome.exe"
+        osName.contains("nux") || osName.contains("nix") -> "google-chrome-stable"
+        else -> null
+    }
+}
+
+fun isExecutableOnPath(executable: String): Boolean {
+    val pathValue = System.getenv("PATH") ?: return false
+    return pathValue.split(File.pathSeparator).any { entry ->
+        if (entry.isBlank()) {
+            false
+        } else {
+            val candidate = File(entry.trim('"'), executable)
+            candidate.exists() && candidate.isFile && candidate.canExecute()
         }
     }
 }

@@ -49,8 +49,8 @@ private object TestClassPortrait : PClass<TestClass>() {
     override val superclass: PClass<*>? = null
     override val interfaces: List<PClass<*>> = emptyList()
 
-    override val annotations: List<PAnnotation> = emptyList()
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? = null
+    override val annotations: List<PAnnotation<*>> = emptyList()
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? = null
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean = false
 
     override val constructors: List<PConstructor<TestClass>> = emptyList()
@@ -62,7 +62,7 @@ private object TestClassPortrait : PClass<TestClass>() {
     override val fields: List<PField> = emptyList()
     override fun getField(name: String): PField? = null
 
-    override fun createInstance(vararg args: Any?): TestClass {
+    override fun newInstance(vararg args: Any?): TestClass {
         return when (args.size) {
             0 -> TestClass()
             1 -> TestClass(args[0] as String)

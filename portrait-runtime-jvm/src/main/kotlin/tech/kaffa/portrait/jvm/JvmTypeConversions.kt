@@ -1,6 +1,5 @@
 package tech.kaffa.portrait.jvm
 
-import tech.kaffa.portrait.PClassType
 import tech.kaffa.portrait.PGenericArrayType
 import tech.kaffa.portrait.PParameterizedType
 import tech.kaffa.portrait.PType
@@ -14,7 +13,7 @@ import java.lang.reflect.TypeVariable
 import java.lang.reflect.WildcardType
 
 internal fun Type.toPortraitType(): PType = when (this) {
-    is Class<*> -> PClassType(Portrait.of(this))
+    is Class<*> -> Portrait.of(this)
     is ParameterizedType -> PParameterizedType(
         rawType = Portrait.of(rawType as Class<*>),
         ownerType = ownerType?.toPortraitType(),

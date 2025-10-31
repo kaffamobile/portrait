@@ -39,6 +39,6 @@ fun interface ProxyHandler<T> {
      * @return The result to return from the method invocation
      * @throws Exception Any exception to propagate from the method call
      */
-    fun invoke(self: T, method: PMethod, args: Array<out Any?>?): Any?
+    fun invoke(self: T, method: PMethod, args: Array<out Any?>): Any?
 }
 

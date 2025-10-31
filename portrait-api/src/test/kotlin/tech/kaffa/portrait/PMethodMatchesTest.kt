@@ -81,20 +81,20 @@ class PMethodMatchesTest {
             override val parameterTypes: List<PClass<*>> = parameterTypes
             override val parameterCount: Int = parameterTypes.size
             override val returnType: PClass<*> = returnType
-            override val genericReturnType: PType = PClassType(returnType)
+            override val genericReturnType: PType = returnType
             override val declaringClass: PClass<*> = declaringType
             override val isStatic: Boolean = false
             override val isFinal: Boolean = false
             override val isAbstract: Boolean = false
-            override val annotations: List<PAnnotation> = emptyList()
-            override val parameterAnnotations: List<List<PAnnotation>> =
+            override val annotations: List<PAnnotation<*>> = emptyList()
+            override val parameterAnnotations: List<List<PAnnotation<*>>> =
                 parameterTypes.map { emptyList() }
 
             override fun invoke(instance: Any?, vararg args: Any?): Any? {
                 throw UnsupportedOperationException("Not used in tests")
             }
 
-            override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? = null
+            override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? = null
 
             override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean = false
 
@@ -117,7 +117,7 @@ class PMethodMatchesTest {
             override val enumConstants: Array<Any>? = null
             override val superclass: PClass<*>? = null
             override val interfaces: List<PClass<*>> = emptyList()
-            override val annotations: List<PAnnotation> = emptyList()
+            override val annotations: List<PAnnotation<*>> = emptyList()
             override val constructors: List<PConstructor<Any>> = emptyList()
             override val methods: List<PMethod> = emptyList()
             override val fields: List<PField> = emptyList()

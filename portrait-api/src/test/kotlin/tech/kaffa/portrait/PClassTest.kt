@@ -4,13 +4,16 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import kotlin.test.Test
-import tech.kaffa.portrait.proxy.ProxyHandler
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
-import kotlin.test.assertTrue
 import kotlin.test.assertSame
+import kotlin.test.assertTrue
+import tech.kaffa.portrait.proxy.ProxyHandler
+import tech.kaffa.portrait.internal.PrimitivePClass
+import tech.kaffa.portrait.internal.UnresolvedPClass
 
 class PClassTest {
 
@@ -108,7 +111,7 @@ class PClassTest {
     @Test
     fun `PClass can handle annotations`() {
         val pClass = mockk<PClass<TestClass>>()
-        val mockAnnotation = mockk<PAnnotation>()
+        val mockAnnotation = mockk<PAnnotation<TestAnnotation>>()
         val annotationClass = mockk<PClass<TestAnnotation>>()
 
         every { pClass.getAnnotation(annotationClass) } returns mockAnnotation
@@ -125,11 +128,11 @@ class PClassTest {
         val pClass = mockk<PClass<TestClass>>()
         val instance = TestClass("test")
 
-        every { pClass.createInstance() } returns instance
-        every { pClass.createInstance("test") } returns instance
+        every { pClass.newInstance() } returns instance
+        every { pClass.newInstance("test") } returns instance
 
-        assertEquals(instance, pClass.createInstance())
-        assertEquals(instance, pClass.createInstance("test"))
+        assertEquals(instance, pClass.newInstance())
+        assertEquals(instance, pClass.newInstance("test"))
     }
 
     @Test
@@ -168,17 +171,17 @@ class PClassTest {
         val zeroArgConstructor = mockk<PConstructor<TestClass>>()
 
         every { zeroArgConstructor.parameterTypes } returns emptyList()
-        every { zeroArgConstructor.call() } returns instance
+        every { zeroArgConstructor.newInstance() } returns instance
 
         val pClass = TestablePClass(
             qualifiedName = "tech.kaffa.portrait.TestClass",
             constructors = listOf(zeroArgConstructor)
         )
 
-        val created = pClass.createInstance()
+        val created = pClass.newInstance()
 
         assertSame(instance, created)
-        verify(exactly = 1) { zeroArgConstructor.call() }
+        verify(exactly = 1) { zeroArgConstructor.newInstance() }
     }
 
     @Test
@@ -189,17 +192,17 @@ class PClassTest {
 
         val constructor = mockk<PConstructor<TestClass>>()
         every { constructor.parameterTypes } returns listOf(parameterType)
-        every { constructor.call(null) } returns expected
+        every { constructor.newInstance(null) } returns expected
 
         val pClass = TestablePClass(
             qualifiedName = "tech.kaffa.portrait.TestClass",
             constructors = listOf(constructor)
         )
 
-        val created = pClass.createInstance(null)
+        val created = pClass.newInstance(null)
 
         assertSame(expected, created)
-        verify(exactly = 1) { constructor.call(null) }
+        verify(exactly = 1) { constructor.newInstance(null) }
     }
 
     @Test
@@ -239,9 +242,29 @@ class PClassTest {
     }
 
     @Test
+    fun `PClass equality compares qualified names across implementations`() {
+        val local: PClass<*> = TestablePClass<TestClass>(qualifiedName = "java.lang.String")
+        val localDuplicate: PClass<*> = TestablePClass<TestClass>(qualifiedName = "java.lang.String")
+        val unresolved: PClass<*> = UnresolvedPClass<TestClass>("java.lang.String")
+        val primitive: PClass<*> = PrimitivePClass<Any>("int")
+        val primitiveDuplicate: PClass<*> = TestablePClass<TestClass>(qualifiedName = "int")
+        val different: PClass<*> = UnresolvedPClass<TestClass>("java.lang.Object")
+
+        assertEquals(local, localDuplicate)
+        assertEquals(local, unresolved)
+        assertEquals(unresolved, local)
+        assertEquals(primitive, primitiveDuplicate)
+        assertNotEquals(local, primitive)
+        assertNotEquals(local, different)
+        assertEquals(local.hashCode(), localDuplicate.hashCode())
+        assertEquals(local.hashCode(), unresolved.hashCode())
+        assertEquals(primitive.hashCode(), primitiveDuplicate.hashCode())
+    }
+
+    @Test
     fun `default annotation helpers consult the annotations list`() {
-        val annotationType = mockk<PClass<out Annotation>>()
-        val annotation = mockk<PAnnotation>()
+        val annotationType = mockk<PClass<Annotation>>()
+        val annotation = mockk<PAnnotation<Annotation>>()
         every { annotation.annotationClass } returns annotationType
 
         val pClass = TestablePClass<TestClass>(
@@ -251,7 +274,7 @@ class PClassTest {
 
         assertSame(annotation, pClass.getAnnotation(annotationType))
         assertTrue(pClass.hasAnnotation(annotationType))
-        assertNull(pClass.getAnnotation(mockk()))
+        assertNull(pClass.getAnnotation<Annotation>(mockk()))
         assertFalse(pClass.hasAnnotation(mockk()))
     }
 
@@ -284,7 +307,7 @@ private class TestablePClass<T : Any>(
     override val constructors: List<PConstructor<T>> = emptyList(),
     override val methods: List<PMethod> = emptyList(),
     override val fields: List<PField> = emptyList(),
-    override val annotations: List<PAnnotation> = emptyList(),
+    override val annotations: List<PAnnotation<*>> = emptyList(),
     override val superclass: PClass<*>? = null,
     override val interfaces: List<PClass<*>> = emptyList(),
     override val objectInstance: T? = null,
@@ -302,4 +325,5 @@ private class TestablePClass<T : Any>(
         throw UnsupportedOperationException("Proxy creation not supported for test stubs")
     }
 }
+
 

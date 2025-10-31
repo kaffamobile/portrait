@@ -15,10 +15,11 @@ import tech.kaffa.portrait.Portrait
  *
  * @param annotation The Java Annotation to wrap
  */
-internal class JvmPAnnotation(private val annotation: Annotation) : PAnnotation() {
+internal class JvmPAnnotation<T: Annotation>(private val annotation: T) : PAnnotation<T>() {
 
-    override val annotationClass: PClass<out Annotation> by lazy {
-        Portrait.of(annotation.annotationClass.java)
+    override val annotationClass: PClass<T> by lazy {
+        @Suppress("UNCHECKED_CAST")
+        Portrait.of(annotation.annotationClass.java) as PClass<T>
     }
     override val simpleName: String by lazy {
         annotationClass.simpleName
@@ -36,8 +37,12 @@ internal class JvmPAnnotation(private val annotation: Annotation) : PAnnotation(
         }
     }
 
+    override fun get(): T {
+        return annotation
+    }
+
     override fun equals(other: Any?): Boolean =
-        other is JvmPAnnotation && annotation == other.annotation
+        other is JvmPAnnotation<*> && annotation == other.annotation
 
     override fun hashCode(): Int = annotation.hashCode()
 }

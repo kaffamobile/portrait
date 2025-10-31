@@ -28,15 +28,16 @@ class StaticPField(
     override val isStatic: Boolean get() = fieldEntry.isStatic
     override val isFinal: Boolean get() = fieldEntry.isFinal
 
-    override val annotations: List<PAnnotation> by lazy {
-        fieldEntry.annotations.map { StaticPAnnotation(it) }
+    override val annotations: List<PAnnotation<*>> by lazy {
+        fieldEntry.annotations.map { StaticPAnnotation<Annotation>(it) }
     }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? =
-        annotations.find { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? =
+        annotations.find { it.annotationClass == annotationClass } as PAnnotation<A>?
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean =
-        annotations.any { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+        annotations.any { it.annotationClass == annotationClass }
 
     override fun get(instance: Any?): Any? {
         return staticPortrait.getFieldValue(index, instance)

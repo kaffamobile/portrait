@@ -104,13 +104,15 @@ internal class JvmPClass<T : Any>(private val kClass: KClass<T>) : PClass<T>() {
         return otherJavaClass != kClass.java && otherJavaClass.isAssignableFrom(kClass.java)
     }
 
-    override val annotations: List<PAnnotation> by lazy {
+    override val annotations: List<PAnnotation<*>> by lazy {
         kClass.annotations.map { JvmPAnnotation(it) }
     }
 
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? {
-        val targetClass = pClassToJavaClass(annotationClass).kotlin
-        return kClass.annotations.find { it.annotationClass == targetClass }?.let { JvmPAnnotation(it) }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? {
+        val javaAnnotationClass = pClassToJavaClass(annotationClass) as Class<A>
+        val instance = kClass.java.getAnnotation(javaAnnotationClass) ?: return null
+        return JvmPAnnotation(instance)
     }
 
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean {
@@ -213,6 +215,6 @@ private class JvmProxyInvocationHandler<T : Any>(
 
         // Delegate to the ProxyHandler
         @Suppress("UNCHECKED_CAST")
-        return handler.invoke(proxy as T, pMethod, args)
+        return handler.invoke(proxy as T, pMethod, args ?: emptyArray())
     }
 }

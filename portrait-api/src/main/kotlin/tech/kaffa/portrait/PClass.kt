@@ -17,7 +17,7 @@ import tech.kaffa.portrait.proxy.ProxyHandler
  *
  * @param T runtime type represented by this descriptor
  */
-abstract class PClass<T : Any> {
+abstract class PClass<T : Any> : PType {
 
     /**
      * Kotlin-style simple name without the package qualifier.
@@ -127,7 +127,7 @@ abstract class PClass<T : Any> {
      * Providers must preserve repeatable annotation multiplicity and the declaration order given by
      * the platform metadata.
      */
-    abstract val annotations: List<PAnnotation>
+    abstract val annotations: List<PAnnotation<*>>
 
     /**
      * Constructors declared by the type. Order is implementation-defined but must be stable within
@@ -172,11 +172,11 @@ abstract class PClass<T : Any> {
      * @throws IllegalArgumentException when no constructor matches the provided arguments
      * @throws RuntimeException if constructor invocation fails for provider-specific reasons
      */
-    open fun createInstance(vararg args: Any?): T {
+    open fun newInstance(vararg args: Any?): T {
         if (args.isEmpty()) {
             val constructor = getConstructor()
                 ?: throw IllegalArgumentException("No zero-argument constructor for $qualifiedName")
-            return constructor.call()
+            return constructor.newInstance()
         }
 
         val argumentTypes = args.map { it?.portrait }
@@ -185,7 +185,7 @@ abstract class PClass<T : Any> {
             val parameterTypes = argumentTypes.filterNotNull().toTypedArray()
             val constructor = getConstructor(*parameterTypes)
             if (constructor != null) {
-                return constructor.call(*args)
+                return constructor.newInstance(*args)
             }
         }
 
@@ -204,7 +204,7 @@ abstract class PClass<T : Any> {
 
         val parameterTypes = matchingConstructor.parameterTypes.toTypedArray()
         val constructor = getConstructor(*parameterTypes) ?: matchingConstructor
-        return constructor.call(*args)
+        return constructor.newInstance(*args)
     }
 
     /**
@@ -217,6 +217,18 @@ abstract class PClass<T : Any> {
      */
     open fun isAssignableFrom(other: PClass<*>): Boolean {
         return other.isSubclassOf(this)
+    }
+
+    /**
+     * Returns `true` when [value] is a runtime instance accepted by this descriptor.
+     *
+     * The default implementation rejects `null` values and delegates to [isAssignableFrom] by
+     * resolving the runtime descriptor of [value] via [Portrait.fromOrNull]. Implementations may
+     * override to cache lookups or support provider-specific shortcuts as long as they keep the
+     * behaviour consistent with [isAssignableFrom].
+     */
+    open fun isInstance(value: Any?): Boolean {
+        return isAssignableFrom(Portrait.fromOrUnresolved(value ?: return false))
     }
 
     /**
@@ -239,8 +251,9 @@ abstract class PClass<T : Any> {
      * By default this scans [annotations] linearly. Implementations may override to support faster
      * lookups (for example, by indexing annotations) while preserving nullability semantics.
      */
-    open fun getAnnotation(annotationClass: PClass<*>): PAnnotation? {
-        return annotations.firstOrNull { it.annotationClass == annotationClass }
+    open fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? {
+        @Suppress("UNCHECKED_CAST")
+        return annotations.firstOrNull { it.annotationClass == annotationClass } as PAnnotation<A>?
     }
 
     /**
@@ -328,33 +341,16 @@ abstract class PClass<T : Any> {
         return qualifiedName == other.qualifiedName
     }
 
-    /**
-     * Hash code derived from the qualified name and structural metadata to minimise collisions
-     * without triggering recursive member hashing.
-     */
-    override fun hashCode(): Int {
-        fun mix(seed: Int, value: Int): Int = seed * 31 + value
-
-        var result = qualifiedName.hashCode()
-
-        val flags = (if (isAbstract) 1 else 0) or
-            (if (isSealed) 1 shl 1 else 0) or
-            (if (isData) 1 shl 2 else 0) or
-            (if (isCompanion) 1 shl 3 else 0) or
-            (if (isPrimitive) 1 shl 4 else 0)
-        result = mix(result, flags)
-
-        val superNameHash = superclass?.qualifiedName?.hashCode() ?: 0
-        result = mix(result, superNameHash)
-
-        result = mix(result, interfaces.size)
-        result = mix(result, constructors.size)
-        result = mix(result, methods.size)
-        result = mix(result, fields.size)
-        result = mix(result, annotations.size)
-
-        return result
+    @Deprecated("Comparing PClass with Class", ReplaceWith("false"))
+    fun equals(other: Class<*>): Boolean {
+        return false
     }
+
+    /**
+     * Hash code derived solely from the qualified name so implementations that resolve the same
+     * type remain interchangeable even when structural metadata differs.
+     */
+    override fun hashCode(): Int = qualifiedName.hashCode()
 
     /**
      * Human-readable representation that echoes the type flags and qualified name.

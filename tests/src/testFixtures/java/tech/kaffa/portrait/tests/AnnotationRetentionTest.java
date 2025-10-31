@@ -73,8 +73,8 @@ public class AnnotationRetentionTest {
         }
     }
 
-    private boolean hasAnnotation(List<PAnnotation> annotations, Class<? extends Annotation> type) {
-        for (PAnnotation annotation : annotations) {
+    private boolean hasAnnotation(List<PAnnotation<?>> annotations, Class<? extends Annotation> type) {
+        for (PAnnotation<?> annotation : annotations) {
             if (type.getName().equals(annotation.getAnnotationClass().getQualifiedName())) {
                 return true;
             }

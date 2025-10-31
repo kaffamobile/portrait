@@ -3,9 +3,9 @@ package tech.kaffa.portrait
 import io.mockk.every
 import io.mockk.mockk
 import kotlin.test.Test
-import tech.kaffa.portrait.proxy.ProxyHandler
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import tech.kaffa.portrait.proxy.ProxyHandler
 
 /**
  * Tests for the abstract base classes to verify their contracts and structure.
@@ -20,7 +20,7 @@ class AbstractClassesTest {
         every { pMethod.parameterTypes } returns emptyList()
         every { pMethod.returnType } returns mockk()
         every { pMethod.declaringClass } returns mockk()
-        every { pMethod.annotations } returns emptyList()
+        every { pMethod.annotations } returns emptyList<PAnnotation<*>>()
         every { pMethod.isStatic } returns false
         every { pMethod.isFinal } returns false
         every { pMethod.isAbstract } returns false
@@ -39,7 +39,7 @@ class AbstractClassesTest {
         every { pField.name } returns "testField"
         every { pField.type } returns mockk()
         every { pField.declaringClass } returns mockk()
-        every { pField.annotations } returns emptyList()
+        every { pField.annotations } returns emptyList<PAnnotation<*>>()
         every { pField.isStatic } returns false
         every { pField.isFinal } returns false
 
@@ -55,7 +55,7 @@ class AbstractClassesTest {
 
         every { pConstructor.parameterTypes } returns emptyList()
         every { pConstructor.declaringClass } returns mockk()
-        every { pConstructor.annotations } returns emptyList()
+        every { pConstructor.annotations } returns emptyList<PAnnotation<*>>()
 
         assertNotNull(pConstructor.parameterTypes)
         assertNotNull(pConstructor.declaringClass)
@@ -64,8 +64,8 @@ class AbstractClassesTest {
 
     @Test
     fun `PAnnotation abstract class has correct structure`() {
-        val pAnnotation = mockk<PAnnotation>()
-        val annotationClass = mockk<PClass<out Annotation>>()
+        val pAnnotation = mockk<PAnnotation<Annotation>>()
+        val annotationClass = mockk<PClass<Annotation>>()
 
         every { pAnnotation.annotationClass } returns annotationClass
         every { pAnnotation.getValue("value") } returns "test"
@@ -99,17 +99,18 @@ class AbstractClassesTest {
         every { concreteMethod.parameterCount } returns 0
         every { concreteMethod.returnType } returns mockk<PClass<*>>()
         every { concreteMethod.declaringClass } returns mockk<PClass<*>>()
-        every { concreteMethod.annotations } returns emptyList<PAnnotation>()
+        every { concreteMethod.annotations } returns emptyList<PAnnotation<*>>()
         every { concreteMethod.isStatic } returns false
         every { concreteMethod.isFinal } returns false
         every { concreteMethod.isAbstract } returns false
         every { concreteMethod.invoke(any(), *anyVararg()) } returns "result"
         every { concreteMethod.isCallableWith(*anyVararg()) } returns true
-        every { concreteMethod.getAnnotation(any()) } returns null
+        every { concreteMethod.getAnnotation<Annotation>(any()) } returns null
         every { concreteMethod.hasAnnotation(any()) } returns false
-        every { concreteMethod.parameterAnnotations } returns emptyList()
+        every { concreteMethod.parameterAnnotations } returns emptyList<List<PAnnotation<*>>>()
 
         assertEquals("testMethod", concreteMethod.name)
         assertEquals("result", concreteMethod.invoke(null))
     }
 }
+

@@ -72,7 +72,7 @@ class StaticPClass<T : Any>(
         }
     }
 
-    override fun createInstance(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         // Find the constructor that matches the arguments using Portrait's
         // assignability (handles boxing, subtyping, arrays). Accept null for
         // reference types and reject for primitive parameters.
@@ -90,7 +90,7 @@ class StaticPClass<T : Any>(
             "No matching constructor found for arguments: ${args.contentToString()}"
         )
 
-        return ctor.call(*args)
+        return ctor.newInstance(*args)
     }
 
     override fun isAssignableFrom(other: PClass<*>): Boolean {
@@ -120,15 +120,16 @@ class StaticPClass<T : Any>(
         return interfaces.any { it.qualifiedName == otherName || it.isSubclassOf(other) }
     }
 
-    override val annotations: List<PAnnotation> by lazy {
-        classEntry.annotations.map { StaticPAnnotation(it) }
+    override val annotations: List<PAnnotation<*>> by lazy {
+        classEntry.annotations.map { StaticPAnnotation<Annotation>(it) }
     }
 
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? =
-        annotations.find { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? =
+        annotations.find { it.annotationClass == annotationClass } as PAnnotation<A>?
 
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean =
-        annotations.any { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+        annotations.any { it.annotationClass == annotationClass }
 
     override val constructors: List<PConstructor<T>> by lazy {
         classEntry.constructors.withIndex().map { (i, constructorEntry) ->

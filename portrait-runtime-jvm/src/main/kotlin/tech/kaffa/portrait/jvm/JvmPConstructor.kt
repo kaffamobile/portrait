@@ -57,13 +57,14 @@ internal class JvmPConstructor<T : Any>(private val constructor: Constructor<T>)
 
     override val declaringClass: PClass<T> by lazy { Portrait.of(constructor.declaringClass) }
     override val parameterTypes: List<PClass<*>> by lazy { constructor.parameterTypes.map { Portrait.of(it) } }
-    override val annotations: List<PAnnotation> =
+    override val annotations: List<PAnnotation<*>> =
         constructor.annotations.map { JvmPAnnotation(it) }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? {
-        @Suppress("UNCHECKED_CAST")
-        val javaClass = pClassToJavaClass(annotationClass) as Class<out Annotation>
-        return constructor.getAnnotation(javaClass)?.let { JvmPAnnotation(it) }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? {
+        val javaClass = pClassToJavaClass(annotationClass) as Class<A>
+        val instance = constructor.getAnnotation(javaClass) ?: return null
+        return JvmPAnnotation(instance)
     }
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean {
@@ -72,12 +73,8 @@ internal class JvmPConstructor<T : Any>(private val constructor: Constructor<T>)
         return constructor.isAnnotationPresent(javaClass)
     }
 
-    override fun call(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         return constructor.newInstance(*args)
-    }
-
-    override fun callBy(args: List<Any?>): T {
-        return call(*args.toTypedArray())
     }
 
     override fun isCallableWith(vararg argumentTypes: PClass<*>): Boolean {

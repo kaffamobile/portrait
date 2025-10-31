@@ -78,13 +78,14 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
         }
     }
 
-    override val annotations: List<PAnnotation> =
+    override val annotations: List<PAnnotation<*>> =
         method.annotations.map { JvmPAnnotation(it) }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? {
-        @Suppress("UNCHECKED_CAST")
-        val javaClass = pClassToJavaClass(annotationClass) as Class<out Annotation>
-        return method.getAnnotation(javaClass)?.let { JvmPAnnotation(it) }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? {
+        val javaClass = pClassToJavaClass(annotationClass) as Class<A>
+        val instance = method.getAnnotation(javaClass) ?: return null
+        return JvmPAnnotation(instance)
     }
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean {
@@ -93,7 +94,7 @@ internal class JvmPMethod(private val method: Method) : PMethod() {
         return method.isAnnotationPresent(javaClass)
     }
 
-    override val parameterAnnotations: List<List<PAnnotation>> =
+    override val parameterAnnotations: List<List<PAnnotation<*>>> =
         method.parameterAnnotations.map { paramAnnotations ->
             paramAnnotations.map { JvmPAnnotation(it) }
         }

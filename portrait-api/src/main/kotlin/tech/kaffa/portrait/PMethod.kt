@@ -46,7 +46,7 @@ abstract class PMethod {
     abstract fun invoke(instance: Any?, vararg args: Any?): Any?
 
     /** All annotations present on this method, empty if none */
-    abstract val annotations: List<PAnnotation>
+    abstract val annotations: List<PAnnotation<*>>
 
     /**
      * Gets a specific annotation from this method.
@@ -54,7 +54,7 @@ abstract class PMethod {
      * @param annotationClass The annotation type to look for
      * @return The annotation if present, null otherwise
      */
-    abstract fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation?
+    abstract fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>?
 
     /**
      * Checks if this method has a specific annotation.
@@ -65,7 +65,7 @@ abstract class PMethod {
     abstract fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean
 
     /** Annotations for each parameter of this method */
-    abstract val parameterAnnotations: List<List<PAnnotation>>
+    abstract val parameterAnnotations: List<List<PAnnotation<*>>>
 
     /**
      * Checks if this method can be called with the given argument types.

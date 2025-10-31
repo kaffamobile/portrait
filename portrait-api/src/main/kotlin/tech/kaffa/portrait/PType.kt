@@ -10,13 +10,6 @@ package tech.kaffa.portrait
 sealed interface PType
 
 /**
- * Represents a concrete class or interface without type arguments.
- */
-data class PClassType(
-    val classDescriptor: PClass<*>
-) : PType
-
-/**
  * Represents a parameterized type such as `List<String>`.
  */
 data class PParameterizedType(
@@ -52,7 +45,7 @@ data class PGenericArrayType(
  * Returns a human-readable representation similar to [java.lang.reflect.Type.getTypeName].
  */
 fun PType.typeName(): String = when (this) {
-    is PClassType -> classDescriptor.qualifiedName
+    is PClass<*> -> qualifiedName
     is PGenericArrayType -> "${componentType.typeName()}[]"
     is PParameterizedType -> buildString {
         if (ownerType != null) {
@@ -69,7 +62,7 @@ fun PType.typeName(): String = when (this) {
     is PTypeVariable -> buildString {
         append(name)
         val meaningfulBounds = bounds.filterNot { bound ->
-            bound is PClassType && bound.classDescriptor.qualifiedName == "java.lang.Object"
+            bound is PClass<*> && bound.qualifiedName == "java.lang.Object"
         }
         if (meaningfulBounds.isNotEmpty()) {
             append(meaningfulBounds.joinToString(prefix = " extends ", transform = PType::typeName))
@@ -78,8 +71,8 @@ fun PType.typeName(): String = when (this) {
     is PWildcardType -> when {
         lowerBounds.isNotEmpty() -> lowerBounds.joinToString(prefix = "? super ", transform = PType::typeName)
         upperBounds.isEmpty() -> "?"
-        upperBounds.size == 1 && upperBounds.first() is PClassType &&
-            (upperBounds.first() as PClassType).classDescriptor.qualifiedName == "java.lang.Object" -> "?"
+        upperBounds.size == 1 && upperBounds.first() is PClass<*> &&
+            (upperBounds.first() as PClass<*>).qualifiedName == "java.lang.Object" -> "?"
         else -> upperBounds.joinToString(prefix = "? extends ", transform = PType::typeName)
     }
 }

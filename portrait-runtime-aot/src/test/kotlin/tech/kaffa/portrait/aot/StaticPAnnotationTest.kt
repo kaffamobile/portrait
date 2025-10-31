@@ -1,10 +1,10 @@
 package tech.kaffa.portrait.aot
 
 import kotlin.test.Test
-import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import tech.kaffa.portrait.aot.meta.PAnnotationEntry
 
 class StaticPAnnotationTest {
 
@@ -26,7 +26,7 @@ class StaticPAnnotationTest {
     @Test
     fun `StaticPAnnotation basic properties from metadata`() {
         val annotationEntry = createTestAnnotationEntry()
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         // The annotation class should be resolvable since TestAnnotation exists in the test classpath
         assertNotNull(staticPAnnotation.annotationClass)
@@ -38,7 +38,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation can get string property values`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         val stringValue = staticPAnnotation.getValue("value") as? String
         assertEquals("test_value", stringValue)
@@ -48,7 +48,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation can get numeric property values`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         val numberValue = staticPAnnotation.getValue("number") as? Int
         assertEquals(42, numberValue)
@@ -58,7 +58,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation can get boolean property values`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         val booleanValue = staticPAnnotation.getValue("flag") as? Boolean
         assertEquals(true, booleanValue)
@@ -68,7 +68,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation can get array property values`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         @Suppress("UNCHECKED_CAST")
         val arrayValue = staticPAnnotation.getValue("array") as? Array<String>
@@ -83,7 +83,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation handles non-existent properties`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         val nonExistentValue = staticPAnnotation.getValue("nonExistentProperty") as? String
         assertNull(nonExistentValue)
@@ -93,7 +93,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation handles type mismatches gracefully`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         // Try to get a string value as an integer
         val mismatchedValue = staticPAnnotation.getValue("value") as? Int
@@ -114,7 +114,7 @@ class StaticPAnnotationTest {
             )
         )
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntryWithNull)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntryWithNull)
 
         val nullValue = staticPAnnotation.getValue("nullValue") as? String
         assertNull(nullValue)
@@ -132,7 +132,7 @@ class StaticPAnnotationTest {
             properties = emptyMap()
         )
 
-        val staticPAnnotation = StaticPAnnotation(emptyAnnotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(emptyAnnotationEntry)
 
         val anyValue = staticPAnnotation.getValue("anyProperty") as? String
         assertNull(anyValue)
@@ -142,7 +142,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation handles complex nested values`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         @Suppress("UNCHECKED_CAST")
         val nestedValue = staticPAnnotation.getValue("nested") as? Map<String, Any>
@@ -163,7 +163,7 @@ class StaticPAnnotationTest {
             )
         )
 
-        val staticPAnnotation = StaticPAnnotation(partialAnnotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(partialAnnotationEntry)
 
         val customValue = staticPAnnotation.getValue("value") as? String
         assertEquals("custom_value", customValue)
@@ -177,7 +177,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation type casting with generics`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         // Test getting values with different generic types
         val stringValue = staticPAnnotation.getValue("value") as? String
@@ -193,7 +193,7 @@ class StaticPAnnotationTest {
     fun `StaticPAnnotation property key case sensitivity`() {
         val annotationEntry = createTestAnnotationEntry()
 
-        val staticPAnnotation = StaticPAnnotation(annotationEntry)
+        val staticPAnnotation = StaticPAnnotation<Annotation>(annotationEntry)
 
         // Properties should be case-sensitive
         val correctCase = staticPAnnotation.getValue("value") as? String

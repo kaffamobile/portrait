@@ -43,7 +43,7 @@ abstract class PField {
     abstract fun set(instance: Any?, value: Any?)
 
     /** All annotations present on this field, empty if none */
-    abstract val annotations: List<PAnnotation>
+    abstract val annotations: List<PAnnotation<*>>
 
     /**
      * Gets a specific annotation from this field.
@@ -51,7 +51,7 @@ abstract class PField {
      * @param annotationClass The annotation type to look for
      * @return The annotation if present, null otherwise
      */
-    abstract fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation?
+    abstract fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>?
 
     /**
      * Checks if this field has a specific annotation.

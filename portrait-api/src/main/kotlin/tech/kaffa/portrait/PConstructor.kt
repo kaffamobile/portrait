@@ -20,7 +20,7 @@ abstract class PConstructor<T : Any> {
     abstract val parameterTypes: List<PClass<*>>
 
     /** All annotations present on this constructor, empty if none */
-    abstract val annotations: List<PAnnotation>
+    abstract val annotations: List<PAnnotation<*>>
 
     /**
      * Gets a specific annotation from this constructor.
@@ -28,7 +28,7 @@ abstract class PConstructor<T : Any> {
      * @param annotationClass The annotation type to look for
      * @return The annotation if present, null otherwise
      */
-    abstract fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation?
+    abstract fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>?
 
     /**
      * Checks if this constructor has a specific annotation.
@@ -46,17 +46,7 @@ abstract class PConstructor<T : Any> {
      * @throws IllegalArgumentException if argument types don't match or argument count is wrong
      * @throws RuntimeException if the constructor throws an exception or is not accessible
      */
-    abstract fun call(vararg args: Any?): T
-
-    /**
-     * Invokes this constructor with arguments provided as a list.
-     *
-     * @param args The arguments to pass to the constructor, must match parameter types
-     * @return A new instance of type T
-     * @throws IllegalArgumentException if argument types don't match or argument count is wrong
-     * @throws RuntimeException if the constructor throws an exception or is not accessible
-     */
-    abstract fun callBy(args: List<Any?>): T
+    abstract fun newInstance(vararg args: Any?): T
 
     /**
      * Checks if this constructor can be called with the given argument types.

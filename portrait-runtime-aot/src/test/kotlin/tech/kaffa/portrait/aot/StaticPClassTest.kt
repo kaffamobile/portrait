@@ -357,7 +357,7 @@ class StaticPClassTest {
 
         val staticPClass = StaticPClass(mockPortrait)
 
-        val instance = staticPClass.createInstance()
+        val instance = staticPClass.newInstance()
         assertEquals(testInstance, instance)
     }
 

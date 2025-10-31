@@ -26,7 +26,7 @@ internal class PrimitivePClass<T : Any>(primitiveTypeName: String) : PClass<T>()
     override val interfaces: List<PClass<*>> = emptyList()
     override val isPrimitive = true
 
-    override fun createInstance(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         throw UnsupportedOperationException("Cannot create instance of primitive type $simpleName")
     }
 
@@ -38,8 +38,8 @@ internal class PrimitivePClass<T : Any>(primitiveTypeName: String) : PClass<T>()
         return false
     }
 
-    override val annotations: List<PAnnotation> = emptyList()
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? = null
+    override val annotations: List<PAnnotation<*>> = emptyList()
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? = null
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean = false
 
     override val constructors: List<PConstructor<T>> = emptyList()

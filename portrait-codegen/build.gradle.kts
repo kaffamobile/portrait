@@ -39,6 +39,10 @@ kotlin {
     jvmToolchain(11)
 }
 
+java {
+    withSourcesJar()
+}
+
 application {
     mainClass.set("tech.kaffa.portrait.codegen.cli.PortraitKt")
 }

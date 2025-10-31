@@ -1,7 +1,6 @@
 package tech.kaffa.portrait.tests;
 
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -10,21 +9,8 @@ import tech.kaffa.portrait.PClass;
 import tech.kaffa.portrait.PField;
 import tech.kaffa.portrait.PMethod;
 import tech.kaffa.portrait.Portrait;
-import tech.kaffa.portrait.tests.fixtures.GenericFixtures;
+import tech.kaffa.portrait.tests.fixtures.*;
 import tech.kaffa.portrait.proxy.ProxyHandler;
-import tech.kaffa.portrait.tests.fixtures.AnnotatedTestClass;
-import tech.kaffa.portrait.tests.fixtures.Calculator;
-import tech.kaffa.portrait.tests.fixtures.ExceptionTestClass;
-import tech.kaffa.portrait.tests.fixtures.MultiConstructorClass;
-import tech.kaffa.portrait.tests.fixtures.ParameterTestClass;
-import tech.kaffa.portrait.tests.fixtures.ServiceClass;
-import tech.kaffa.portrait.tests.fixtures.SimpleReflectiveClass;
-import tech.kaffa.portrait.tests.fixtures.SingletonService;
-import tech.kaffa.portrait.tests.fixtures.Status;
-import tech.kaffa.portrait.tests.fixtures.TestClass;
-import tech.kaffa.portrait.tests.fixtures.TestDataClass;
-import tech.kaffa.portrait.tests.fixtures.TestInterface;
-import tech.kaffa.portrait.tests.fixtures.TestSingleton;
 
 import static org.junit.Assert.*;
 import static tech.kaffa.portrait.PTypeKt.typeName;
@@ -39,7 +25,7 @@ public class PortraitIntegrationTest {
     @Test
     public void generatedMetadataMirrorsRuntimeBehaviour() {
         PClass<SimpleReflectiveClass> simpleClass = Portrait.of(SimpleReflectiveClass.class);
-        SimpleReflectiveClass instance = simpleClass.createInstance("tester", 21);
+        SimpleReflectiveClass instance = simpleClass.newInstance("tester", 21);
 
         PMethod greet = simpleClass.getMethod("greet");
         PMethod calculate = simpleClass.getMethod("calculate", Portrait.intClass());
@@ -113,7 +99,7 @@ public class PortraitIntegrationTest {
     @Test
     public void serviceClassMethodsMutateInternalState() {
         PClass<ServiceClass> serviceClass = Portrait.of(ServiceClass.class);
-        ServiceClass instance = serviceClass.createInstance();
+        ServiceClass instance = serviceClass.newInstance();
 
         PMethod increment = serviceClass.getMethod("increment");
         PMethod getState = serviceClass.getMethod("getState");
@@ -150,10 +136,10 @@ public class PortraitIntegrationTest {
     public void createsInstancesViaConstructors() {
         PClass<TestClass> pClass = Portrait.of(TestClass.class);
 
-        TestClass defaultInstance = pClass.createInstance();
+        TestClass defaultInstance = pClass.newInstance();
         assertEquals("default", defaultInstance.getInternalValue());
 
-        TestClass customInstance = pClass.createInstance("custom");
+        TestClass customInstance = pClass.newInstance("custom");
         assertEquals("custom", customInstance.getInternalValue());
     }
 
@@ -196,7 +182,7 @@ public class PortraitIntegrationTest {
     @Test
     public void findsAndInvokesMethods() {
         PClass<TestClass> pClass = Portrait.of(TestClass.class);
-        TestClass instance = pClass.createInstance("value");
+        TestClass instance = pClass.newInstance("value");
 
         PMethod doSomething = pClass.getMethod("doSomething");
         assertNotNull(doSomething);
@@ -210,19 +196,13 @@ public class PortraitIntegrationTest {
     @Test
     public void readsAnnotations() {
         PClass<AnnotatedTestClass> annotated = Portrait.of(AnnotatedTestClass.class);
-        PAnnotation classAnnotation = annotated.getAnnotations().stream()
-            .filter(annotation -> "TestAnnotation".equals(annotation.getAnnotationClass().getSimpleName()))
-            .findFirst()
-            .orElse(null);
+        PAnnotation<?> classAnnotation = annotated.getAnnotation(Portrait.of(TestAnnotation.class));
         assertNotNull(classAnnotation);
         assertEquals("class-level", classAnnotation.getStringValue("value"));
 
         PMethod method = annotated.getMethod("annotatedMethod");
         assertNotNull(method);
-        PAnnotation methodAnnotation = method.getAnnotations().stream()
-            .filter(annotation -> "TestAnnotation".equals(annotation.getAnnotationClass().getSimpleName()))
-            .findFirst()
-            .orElse(null);
+        PAnnotation<?> methodAnnotation = method.getAnnotation(Portrait.of(TestAnnotation.class));
         assertNotNull(methodAnnotation);
         assertEquals(Integer.valueOf(200), methodAnnotation.getIntValue("number"));
     }
@@ -269,7 +249,7 @@ public class PortraitIntegrationTest {
             }
         }
         assertNotNull(arrayMethod);
-        ParameterTestClass instance = parameterClass.createInstance();
+        ParameterTestClass instance = parameterClass.newInstance();
         Object result = arrayMethod.invoke(instance, new int[]{1, 2, 3}, new String[]{"a"});
         assertEquals("arrays", result);
     }
@@ -278,15 +258,15 @@ public class PortraitIntegrationTest {
     public void selectsMatchingConstructorOverload() {
         PClass<MultiConstructorClass> multiConstructor = Portrait.of(MultiConstructorClass.class);
 
-        MultiConstructorClass oneArg = multiConstructor.createInstance("first");
+        MultiConstructorClass oneArg = multiConstructor.newInstance("first");
         assertEquals("first", oneArg.getName());
         assertEquals(0, oneArg.getValue());
 
-        MultiConstructorClass twoArgs = multiConstructor.createInstance("second", 5);
+        MultiConstructorClass twoArgs = multiConstructor.newInstance("second", 5);
         assertEquals(5, twoArgs.getValue());
         assertNull(twoArgs.getOptional());
 
-        MultiConstructorClass threeArgs = multiConstructor.createInstance("third", 7, "maybe");
+        MultiConstructorClass threeArgs = multiConstructor.newInstance("third", 7, "maybe");
         assertEquals("maybe", threeArgs.getOptional());
     }
 
@@ -295,7 +275,7 @@ public class PortraitIntegrationTest {
         PClass<ExceptionTestClass> exceptionClass = Portrait.of(ExceptionTestClass.class);
         PMethod throwsException = exceptionClass.getMethod("throwsException");
         assertNotNull(throwsException);
-        ExceptionTestClass instance = exceptionClass.createInstance();
+        ExceptionTestClass instance = exceptionClass.newInstance();
 
         assertThrows(RuntimeException.class, () -> throwsException.invoke(instance));
     }

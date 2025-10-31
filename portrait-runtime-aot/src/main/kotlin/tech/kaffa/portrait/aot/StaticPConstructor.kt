@@ -24,22 +24,19 @@ class StaticPConstructor<T : Any>(
         }
     }
 
-    override val annotations: List<PAnnotation> by lazy {
-        constructorEntry.annotations.map { StaticPAnnotation(it) }
+    override val annotations: List<PAnnotation<*>> by lazy {
+        constructorEntry.annotations.map { StaticPAnnotation<Annotation>(it) }
     }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? =
-        annotations.find { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? =
+        annotations.find { it.annotationClass == annotationClass } as PAnnotation<A>?
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean =
-        annotations.any { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+        annotations.any { it.annotationClass == annotationClass }
 
-    override fun call(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         return staticPortrait.invokeConstructor(index, args)
-    }
-
-    override fun callBy(args: List<Any?>): T {
-        return staticPortrait.invokeConstructor(index, args.toTypedArray())
     }
 
     override fun isCallableWith(vararg argumentTypes: PClass<*>): Boolean {

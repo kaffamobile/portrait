@@ -81,7 +81,7 @@ class StaticPConstructorTest {
 
         val staticPConstructor = StaticPConstructor(constructorEntry, 0, mockDeclaringClass, mockPortrait)
 
-        val instance = staticPConstructor.call("param1", 42)
+        val instance = staticPConstructor.newInstance("param1", 42)
         assertEquals(expectedInstance, instance)
     }
 
@@ -101,7 +101,7 @@ class StaticPConstructorTest {
         assertEquals(0, staticPConstructor.parameterTypes.size)
         assertTrue(staticPConstructor.isCallableWith())
 
-        val instance = staticPConstructor.call()
+        val instance = staticPConstructor.newInstance()
         assertEquals(expectedInstance, instance)
     }
 
@@ -120,7 +120,7 @@ class StaticPConstructorTest {
 
         assertEquals(3, staticPConstructor.parameterTypes.size)
 
-        val instance = staticPConstructor.call(42, true, 3.14)
+        val instance = staticPConstructor.newInstance(42, true, 3.14)
         assertEquals(expectedInstance, instance)
     }
 
@@ -135,7 +135,7 @@ class StaticPConstructorTest {
 
         val staticPConstructor = StaticPConstructor(constructorEntry, 0, mockDeclaringClass, mockPortrait)
 
-        val instance = staticPConstructor.call(null, 42)
+        val instance = staticPConstructor.newInstance(null, 42)
         assertEquals(expectedInstance, instance)
     }
 
@@ -208,7 +208,7 @@ class StaticPConstructorTest {
 
         assertEquals(2, staticPConstructor.parameterTypes.size)
 
-        val instance = staticPConstructor.call(stringArray, intArray)
+        val instance = staticPConstructor.newInstance(stringArray, intArray)
         assertEquals(expectedInstance, instance)
     }
 }

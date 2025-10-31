@@ -6,10 +6,10 @@ package tech.kaffa.portrait
  * PAnnotation wraps platform-specific annotation instances and provides a unified API
  * for annotation introspection across different runtime environments.
  */
-abstract class PAnnotation {
+abstract class PAnnotation<T : Annotation> {
 
     /** The Portrait class of this annotation type */
-    abstract val annotationClass: PClass<out Annotation>
+    abstract val annotationClass: PClass<T>
 
     /** Simple name of the annotation (without package) */
     abstract val simpleName: String
@@ -79,6 +79,14 @@ abstract class PAnnotation {
     @Suppress("UNCHECKED_CAST")
     fun getClassListValue(propertyName: String): List<PClass<*>>? =
         getValue(propertyName) as? List<PClass<*>>
+
+    /**
+     * Produces a runtime annotation instance for this descriptor.
+     *
+     * Implementations may create dynamic proxies or return a backing platform annotation.
+     * Callers should expect best-effort semantics when full reflection is unavailable.
+     */
+    abstract fun get(): T
 
     override fun toString(): String = "@$simpleName"
 }

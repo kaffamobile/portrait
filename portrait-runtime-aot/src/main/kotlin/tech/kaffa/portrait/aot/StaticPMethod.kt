@@ -2,7 +2,6 @@ package tech.kaffa.portrait.aot
 
 import tech.kaffa.portrait.PAnnotation
 import tech.kaffa.portrait.PClass
-import tech.kaffa.portrait.PClassType
 import tech.kaffa.portrait.PGenericArrayType
 import tech.kaffa.portrait.PMethod
 import tech.kaffa.portrait.PParameterizedType
@@ -53,15 +52,16 @@ class StaticPMethod(
     override val isFinal: Boolean get() = methodEntry.isFinal
     override val isAbstract: Boolean get() = methodEntry.isAbstract
 
-    override val annotations: List<PAnnotation> by lazy {
-        methodEntry.annotations.map { StaticPAnnotation(it) }
+    override val annotations: List<PAnnotation<*>> by lazy {
+        methodEntry.annotations.map { StaticPAnnotation<Annotation>(it) }
     }
 
-    override fun getAnnotation(annotationClass: PClass<out Annotation>): PAnnotation? =
-        annotations.find { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+    @Suppress("UNCHECKED_CAST")
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? =
+        annotations.find { it.annotationClass == annotationClass } as PAnnotation<A>?
 
     override fun hasAnnotation(annotationClass: PClass<out Annotation>): Boolean =
-        annotations.any { it.annotationClass.qualifiedName == annotationClass.qualifiedName }
+        annotations.any { it.annotationClass == annotationClass }
 
     override fun invoke(instance: Any?, vararg args: Any?): Any? {
         return staticPortrait.invokeMethod(index, instance, args)
@@ -75,15 +75,15 @@ class StaticPMethod(
         }
     }
 
-    override val parameterAnnotations: List<List<PAnnotation>> by lazy {
+    override val parameterAnnotations: List<List<PAnnotation<*>>> by lazy {
         methodEntry.parameterAnnotations.map { paramAnnotations ->
-            paramAnnotations.map { StaticPAnnotation(it) }
+            paramAnnotations.map { StaticPAnnotation<Annotation>(it) }
         }
     }
 }
 
 private fun PTypeEntry.toPType(): PType = when (this) {
-    is PClassTypeEntry -> PClassType(Portrait.forNameOrUnresolved(className))
+    is PClassTypeEntry -> Portrait.forNameOrUnresolved(className)
     is PParameterizedTypeEntry -> PParameterizedType(
         rawType = Portrait.forNameOrUnresolved(rawTypeName),
         ownerType = ownerType?.toPType(),

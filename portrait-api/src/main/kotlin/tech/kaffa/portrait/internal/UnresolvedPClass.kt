@@ -36,7 +36,7 @@ class UnresolvedPClass<T : Any>(
     override val superclass: PClass<*>? = null // Unknown, could cause issues but safer than guessing
     override val interfaces: List<PClass<*>> = emptyList() // Unknown, assume none
 
-    override fun createInstance(vararg args: Any?): T {
+    override fun newInstance(vararg args: Any?): T {
         throw UnsupportedOperationException("Cannot create instance of unresolved type: $className")
     }
 
@@ -50,8 +50,8 @@ class UnresolvedPClass<T : Any>(
         return false
     }
 
-    override val annotations: List<PAnnotation> = emptyList()
-    override fun getAnnotation(annotationClass: PClass<*>): PAnnotation? = null
+    override val annotations: List<PAnnotation<*>> = emptyList()
+    override fun <A : Annotation> getAnnotation(annotationClass: PClass<A>): PAnnotation<A>? = null
     override fun hasAnnotation(annotationClass: PClass<*>): Boolean = false
 
     override val constructors: List<PConstructor<T>> = emptyList()
